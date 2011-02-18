@@ -44,3 +44,25 @@ function initContextMenu() {
 }
 
 initContextMenu();
+
+
+browser.addMessageListener(function(msg, sender){
+    switch (msg.method) {
+        case 'takeScreenshot':
+            chrome.tabs.getSelected(null, function(tab) {
+                browser.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
+                    var binaryData = atob(dataUrl.replace(/^data\:image\/png\;base64\,/,''));
+                    
+                    Minus.createGallery(function(gallery) {
+                        Minus.uploadItem(gallery.editor_id, tab.title+".png", "image/png", binaryData, 
+                            function(resp){
+                                if (!resp.error)
+                                    browser.tabs.create({ url: "http://min.us/m"+gallery.editor_id });
+                            }
+                        );
+                    });
+                });
+            });
+            break;
+    }
+});

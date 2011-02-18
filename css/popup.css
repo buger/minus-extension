@@ -1,0 +1,51 @@
+body {
+    width: 300px;
+    margin: 0;
+    padding: 10px;
+    padding-top: 20px;
+}
+
+#my_galleries {
+    margin:0;
+    padding:0;
+    list-style: none;
+}
+
+#my_galleries li {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-top: 3px;
+}
+
+#my_galleries .name {
+    width: 265px;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#my_galleries .share_link {
+    background: #eee;    
+    width: 185px;
+}
+
+#my_galleries .items {
+    margin-right: 10px;
+}
+
+h4 {
+    margin: 0;
+    padding: 0;
+    margin-top: 30px;
+}
+
+a.button {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.center {
+    text-align: center;
+}

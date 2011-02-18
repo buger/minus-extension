@@ -2,11 +2,45 @@
 <html>
     <head>
         <link rel="stylesheet" href="css/popup.css" type="text/css">
+        <script id="galleries_template" type="text/x-jquery-tmpl"> 
+            {{each galleries}}
+            <li>
+                <span class='name'>${$value.name||'Untitled'}</span>
+                <br />
+                <span class="items">(${$value.item_count}
+                    {{if $value.item_count>0}}
+                        {{if $value.item_count == 1}}
+                            Item
+                        {{else}}
+                            Items
+                        {{/if}} 
+                    {{else}}
+                        Empty
+                    {{/if}}
+                )</span>
+            
+                <a href="#">Share</a>
+                <a href="http://min.us/m${$value.editor_id}" class='edit' target='_blank'>Edit</a>
+                    
+                    <input style="display:none" class='share_link' value='http://min.us/m${$value.reader_id}'/>
+            </li>
+            {{/each}}
+        </script>
     </head>
     <body>
-        <a href="#" id="take_screenshot">Take Screenshoot</a>
+        <div class="center">
+            <a href="#" id="take_screenshot" class='button'>Take Screenshoot</a><span style="padding: 10px;">or</span>
+            <a href="http://min.us" id="upload_new" class='button' target="_blank">Upload file</a>
+        </div>
+
+        
+        <h4><a href="http://min.us/pages/galleries" target="_blank">My Galleries</a></h4>
+        <ul id="my_galleries">
+            Loading galleries...
+        </ul>
 
         <script src="js/jquery.min.js"></script>
+        <script src="js/jquery.tmpl.min.js"></script>
         <script src="js/minus.js"></script>
         <script src="js/browser_api.js"></script>
         <script src="js/popup.js"></script>

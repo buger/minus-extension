@@ -99,9 +99,9 @@
                 }
             },
 
-            getCurrent: function(callback) {
+            getSelected: function(windowID, callback) {
                 if (browser.isChrome) {
-                    chrome.tabs.getCurrent(callback);
+                    chrome.tabs.getSelected(windowID, callback);
                 }
             },
 
@@ -110,6 +110,12 @@
 
                 if (connection) {
                     browser.postMessage(message, connection);
+                }
+            },
+
+            captureVisibleTab: function(windowID, options, callback) {
+                if (browser.isChrome) {
+                    chrome.tabs.captureVisibleTab(windowID, options, callback);
                 }
             },
 
