@@ -1,7 +1,7 @@
 {
-   "name": "Minius",
-   "version": "0.1",
-   "description": "Minus - Share simply",
+   "name": "Minus",
+   "version": "0.1.1",
+   "description": "Min.us - Share simply",
    "icons": {
       "16": "images/logo_37.png",
       "128": "images/logo_128.png"
