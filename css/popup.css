@@ -1,14 +1,55 @@
+input {
+    border: 1px solid #ccc;
+}
+
+a, a:visited {
+    text-decoration: none;
+    color:#555;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #2200C1;
+}
+
 body {
     width: 300px;
     margin: 0;
-    padding: 10px;
     padding-top: 20px;
+    font-family: arial;
+    font-size: 14px;
+}
+
+#header {
+    height: 40px;
+    padding-left: 10px;
+}
+
+#latest_file {
+    padding: 5px;
+    font-size: 13px;
+    display: none;
+}
+
+#latest_file input {
+    width: 210px;
+    margin-left: 5px;
+}
+
+#galleries_container {
+    margin: 0;
+    height: auto;
+    max-height: 300px;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 #my_galleries {
     margin:0;
     padding:0;
     list-style: none;
+
+    width: 100%;
 }
 
 #my_galleries li {
@@ -16,10 +57,20 @@ body {
     border-radius: 5px;
     border: 1px solid #ccc;
     margin-top: 3px;
+    position: relative;
+    margin-left: 10px;
+    margin-right: 10px;
+
+    background: -webkit-gradient(linear, left top, left bottom, from(white), to(#EFEFEF));
+}
+
+#my_galleries li:hover {
+    background: -webkit-gradient(linear, left top, left bottom, from(#EFEFEF), to(#CCCCCC));
+    cursor: default;
 }
 
 #my_galleries .name {
-    width: 265px;
+    max-width: 265px;
     display: inline-block;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -30,22 +81,98 @@ body {
     width: 185px;
 }
 
+#my_galleries .edit {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+}
+
+#my_galleries .edit img {
+    margin-right: 3px;
+    vertical-align: middle;
+    font-size: 12px;
+}
+
 #my_galleries .items {
     margin-right: 10px;
+    font-size: 10px;
+    font-family: Verdana, sans-serif;
+    color: #666;
+    white-space: nowrap;
+}
+
+#my_galleries .items.count {
+    display: inline-block;
+    width: 40px;
 }
 
 h4 {
     margin: 0;
-    padding: 0;
-    margin-top: 30px;
+    padding: 0px 5px;
 }
 
 a.button {
-    padding: 10px;
+    padding: 10px 14px;
+    margin-right: 2px;
     border: 1px solid #ccc;
     border-radius: 5px;
+    
+    background: -webkit-gradient(linear, left top, left bottom, from(#EFEFEF), to(#CCCCCC));
+}
+
+a.button:hover {
+    text-decoration: none;
+    
+    background: -webkit-gradient(linear, left top, left bottom, from(#EEEEEE), to(#AAAAAA));
+    
+    color: #333;
 }
 
 .center {
     text-align: center;
+}
+
+#footer {
+    clear: both;
+    height: 40px;
+}
+
+#footer img {
+    vertical-align: middle;
+}
+
+#footer a {
+    font-size: 13px;
+    position: absolute;
+    right: 5px;
+    bottom: 10px;
+}
+
+
+#loader {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    height: 100%;
+    width: 100%;
+    background: rgba(200,200,200, 0.4); 
+    font-size: 16px;
+    font-family: verdana, sans-serif;
+}
+
+#loader div {
+    margin-top: 50%;
+    background: url(../images/ajax-loader.gif) bottom center no-repeat;
+    margin-left: auto;
+    margin-right: auto;
+
+    width: 250px;
+    height: 40px;
+    text-align: center;
+}
+
+/************* Scrollbar ***************/
+.jspVerticalBar
+{
+	right: -3px;
 }

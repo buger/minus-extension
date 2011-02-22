@@ -1,46 +1,64 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <link rel="stylesheet" href="css/popup.css" type="text/css">
+        <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.3.0/build/cssreset/reset-min.css">
+        <link rel="stylesheet" href="css/jquery.jscrollpane.css" />
+        <link rel="stylesheet" href="css/popup.css" />
+
         <script id="galleries_template" type="text/x-jquery-tmpl"> 
             {{each galleries}}
             <li>
-                <span class='name'>${$value.name||'Untitled'}</span>
+                <a class='name' target='_blank' href='http://min.us/m${$value.reader_id}'>${$value.name||'Untitled'}</a>
                 <br />
-                <span class="items">(${$value.item_count}
+                <span class="items count">
                     {{if $value.item_count>0}}
-                        {{if $value.item_count == 1}}
-                            Item
-                        {{else}}
-                            Items
-                        {{/if}} 
+                        Items:&nbsp;${$value.item_count}
                     {{else}}
                         Empty
                     {{/if}}
-                )</span>
+                </span>
+                <span class="items">
+                    Last visit: ${$value.last_visit}
+                </span>
             
-                <a href="#">Share</a>
-                <a href="http://min.us/m${$value.editor_id}" class='edit' target='_blank'>Edit</a>
+                {{if $value.editor_id != 'Unavailable'}}
+                <a href="http://min.us/m${$value.editor_id}" class='edit' target='_blank'><img src='http://min.us/smedia/minus/lightpencil.png' width='12px'/>edit</a>
+                {{/if}}
                     
-                    <input style="display:none" class='share_link' value='http://min.us/m${$value.reader_id}'/>
+                <input style="display:none" class='share_link' value='http://min.us/m${$value.reader_id}'/>
             </li>
             {{/each}}
         </script>
     </head>
     <body>
-        <div class="center">
+        <div id="header">
             <a href="#" id="take_screenshot" class='button'>Take Screenshoot</a><span style="padding: 10px;">or</span>
             <a href="http://min.us" id="upload_new" class='button' target="_blank">Upload file</a>
         </div>
-
         
-        <h4><a href="http://min.us/pages/galleries" target="_blank">My Galleries</a></h4>
-        <ul id="my_galleries">
-            Loading galleries...
-        </ul>
+        <div id="latest_file">
+            <span>Lastest file:</span><input />
+        </div>
+        
+        <div id="galleries_container">
+            <ul id="my_galleries">
+                <span style="margin-left: 10px; color: #666">Loading galleries...</span>
+            </ul>
+        </div>
+        <div id="footer">
+            <img src="images/logo_big.png" height="40px"/>
+            <a href="http://min.us/pages/galleries" target="_blank" id="galleries_header" class="minus_link"></a>
+        </div>    
+
+        <div id="loader" style="display: none">
+            <div>Taking Screenshoot...</div>
+        </div>
 
         <script src="js/jquery.min.js"></script>
         <script src="js/jquery.tmpl.min.js"></script>
+        <script src="js/jquery.mousewheel.js"></script>
+        <script src="js/jquery.jscrollpane.min.js"></script>
+
         <script src="js/minus.js"></script>
         <script src="js/browser_api.js"></script>
         <script src="js/popup.js"></script>
