@@ -27,15 +27,28 @@
     
     if (XMLHttpRequest && !XMLHttpRequest.prototype.sendAsBinary) { 
         XMLHttpRequest.prototype.sendAsBinary = function(datastr) {
-            var bb = new BlobBuilder();
-            var data = new ArrayBuffer(datastr.length);
-            var ui8a = new Uint8Array(data, 0);
-            for (var i=0; i<datastr.length; i++) {
-                    ui8a[i] = (datastr.charCodeAt(i) & 0xff);
+            if (window.chrome) {
+                var bb = new BlobBuilder();
+                var data = new ArrayBuffer(datastr.length);
+                var ui8a = new Uint8Array(data, 0);
+                for (var i=0; i<datastr.length; i++) {
+                        ui8a[i] = (datastr.charCodeAt(i) & 0xff);
+                }
+                bb.append(data);
+                var blob = bb.getBlob();
+                this.send(blob);
+            } else {                                
+                return this.send(ords);
+                
+                function byteValue(x) {
+                    return x.charCodeAt(0) & 0xff;
+                }
+                var ords = Array.prototype.map.call(datastr, byteValue);               
+                
+                var ui8a = new Uint8Array(ords);
+
+                this.send(ui8a.buffer);
             }
-            bb.append(data);
-            var blob = bb.getBlob();
-            this.send(blob);
         }
     }
 
