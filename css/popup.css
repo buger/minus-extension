@@ -60,11 +60,13 @@ body {
     position: relative;
     margin-left: 10px;
     margin-right: 10px;
-
+    
+    background: #efefef;
     background: -webkit-gradient(linear, left top, left bottom, from(white), to(#EFEFEF));
 }
 
 #my_galleries li:hover {
+    background: #ccc;
     background: -webkit-gradient(linear, left top, left bottom, from(#EFEFEF), to(#CCCCCC));
     cursor: default;
 }
@@ -117,12 +119,14 @@ a.button {
     border: 1px solid #ccc;
     border-radius: 5px;
     
+    background: #efefef;
     background: -webkit-gradient(linear, left top, left bottom, from(#EFEFEF), to(#CCCCCC));
 }
 
 a.button:hover {
     text-decoration: none;
     
+    background: #ccc;
     background: -webkit-gradient(linear, left top, left bottom, from(#EEEEEE), to(#AAAAAA));
     
     color: #333;
@@ -134,23 +138,58 @@ a.button:hover {
 
 #footer {
     clear: both;
-    height: 40px;
+    height: 25px;
+    position: relative;
+    padding-top: 15px;
+}
+
+#footer * {
+    float: left;
 }
 
 #footer img {
     vertical-align: middle;
+    position: absolute;
+    left: 0px;
+    top: 0px;
 }
 
-#footer a {
+#footer a.minus_link {
+    position: absolute;
+    bottom: 9px;
+    right: 60px;
+    width: 80px;
     font-size: 13px;
+}
+
+#user, #signout {
+    font-size: 14px;
+    color: #737373;
+    cursor: pointer;
+    font-weight: bold;
+    text-decoration: none;   
+}
+
+#user {
+    text-align: left;
+    margin-left: 80px;
+}
+
+#user:hover, #signout:hover {
+    text-decoration: underline;
+    color: #2200C1;
+}
+
+#signout {
     position: absolute;
     right: 5px;
     bottom: 10px;
+    font-size: 12px;
+    font-weight: normal;
 }
 
-
 #loader {
-    position: fixed;
+    position: absolute;
     top: 0px;
     left: 0px;
     height: 100%;
@@ -161,7 +200,7 @@ a.button:hover {
 }
 
 #loader div {
-    margin-top: 50%;
+    margin-top: 30%;
     background: url(../images/ajax-loader.gif) bottom center no-repeat;
     margin-left: auto;
     margin-right: auto;
@@ -176,3 +215,18 @@ a.button:hover {
 {
 	right: -3px;
 }
+
+/********** Opera css ***********/
+
+.opera #take_screenshot {
+    display: none;
+}
+
+.opera #header span {
+    display: none;
+}
+
+.opera #header:after {
+    content: "";
+}
+

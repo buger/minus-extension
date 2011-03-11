@@ -17,6 +17,9 @@
     
     var browser;
     var browser_params = {};
+    var jQuery, $;
+
+    window.isContentScript = true;
 
     function injectJS(script) {
         eval(script);
@@ -25,10 +28,14 @@
             browser = window.browser;
 
             Object.extend(window.browser, browser_params);
-        }
+        }        
 
         if (window.jQuery) {
             window.jQuery.noConflict();
+
+            jQuery = window.jQuery;
+
+            $ = jQuery;
         }
     }
 

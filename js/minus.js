@@ -252,6 +252,20 @@
         });
     }
 
+    Minus.getUsername = function(callback) {
+        new Ajax('http://min.us', {
+            onSuccess: function(response) {
+                var match = response.match(/\/u\/(.*)\/pref"/);
+
+                if (match && match[1]) {
+                    callback({ username: match[1] });
+                } else {
+                    callback({ error: 'not_logged' });
+                }
+            }
+        });
+    }
+
 
     // Make it Global
     window.Minus = Minus;

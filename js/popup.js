@@ -12,14 +12,17 @@ function inputForShare(selector) {
 }
 
 function updateGalleries() {
-    Minus.myGalleries(function(resp) {               
-        var html = $('#galleries_template').tmpl({galleries: resp.galleries});        
-
-        $('#my_galleries').html(html);        
-
-        $("#galleries_container").jScrollPane({
-            maintainPosition: true
-        }); 
+    Minus.myGalleries(function(resp) {            
+        if (resp.galleries.length === 0) {
+            $('#my_galleries span').html(' ');
+        } else {
+            var html = $('#galleries_template').tmpl({galleries: resp.galleries});        
+            $('#my_galleries').html(html);        
+            
+            $("#galleries_container").jScrollPane({
+                maintainPosition: true
+            }); 
+        }
 
         $('#galleries_header').html("Galleries ("+resp.galleries.length+")");
 
@@ -44,6 +47,12 @@ browser.addMessageListener(function(msg, sender) {
     console.log("Received message", msg, sender);
 });
 
+browser.onReady(function(){
+    
+});
+
+
+
 $('#take_screenshot').live('click', function(){
     $('#loader').show();
 
@@ -53,5 +62,21 @@ $('#take_screenshot').live('click', function(){
 $(document).ready(function() {
     updateGalleries();
 
-    inputForShare("#latest_file input");    
+    var user = window.localStorage['username'];
+
+    if (user && user != "") {
+        $('#user').html(user)        
+            .attr('href','u/'+user+'/pref');
+
+        $('#signout').show();
+    } else {
+        $('#user').html('Sign In')
+            .attr('href','http://min.us');
+
+        $('#galleries_header').css({ right: '5px' });
+        
+        $('#signout').hide();
+    }
 });
+
+

@@ -57,9 +57,9 @@
 
 
     var browser = {
-        isChrome: window.chrome != undefined,
-        isOpera:  window.opera != undefined,
-        isSafari: window.safari != undefined,
+        isChrome: typeof(window.chrome) === "object",
+        isOpera:  typeof(window.opera) === "object",
+        isSafari: typeof(window.safari) === "object",
 
         _o_toolbarButton: null,
 
@@ -158,11 +158,10 @@
                     page_type = 'script';
                 }
             } else if (browser.isOpera) {
-                if (opera.extension) {
-                    page_type = opera.extension.broadcastMessage ? 'background' : 'script';
-                } else {
-                    page_type = 'injected';
-                }
+                page_type = opera.extension.broadcastMessage ? 'background' : 
+                            window.isContentScript ? 'injected' : 
+                            'popup';
+
             } else if (browser.isSafari) {
                 page_type = safari.extension.globalPage ? 'background' : 'script';
             }
@@ -172,7 +171,7 @@
 
                 console.log("Background page");
             }
-
+            
             return page_type;        
         },    
         
@@ -393,7 +392,7 @@
             }
             
             // if background page
-            if (browser.isBackgroundPage) {
+            if (browser.isBackgroundPage) {                
                 opera.extension.onconnect = function(event){
                     event.source.postMessage({
                         method: 'connected', 
@@ -401,8 +400,6 @@
                         config: browser.config, 
                         extension_url: browser.extension_url
                     });
-
-                    opera.postError("sent message to popup");
                 }
                 
                 opera.extension.onmessage = function(event) {
@@ -418,6 +415,11 @@
                             scripts: recources.scripts,
                             styles: recources.styles
                         });
+                    } else if (typeof(event.data) == 'object' && event.data.method == 'popupSize') {
+                        if (browser._o_toolbarButton) {
+                            browser._o_toolbarButton.popup.height = event.data.height;
+                            browser._o_toolbarButton.popup.width = event.data.width;
+                        }
                     } else {
                         browser._listeners.forEach(function(fn) {
                             fn(event.data, event.source);
@@ -428,6 +430,8 @@
                 browser.onReady();
             } else {
                 opera.extension.onmessage = function(event) {                        
+                    console.log("Script::Received message: ", JSON.stringify(event.data));
+
                     if (typeof(event.data) == 'object' && event.data.method == 'connected' && event.data.source == 'background') {
                         browser._background_page = event.source;
                         browser.config = event.data.config;
@@ -438,6 +442,21 @@
                             fn(event.data, event.source);
                         });
                     }
+                }
+
+                if (browser.getPageType() === "popup") {
+                    function listener() {
+                        if (document.body.previousClientHeight !== document.body.clientHeight ||
+                            document.body.previousClientWidth  !== document.body.clientWidth) {
+                            browser.postMessage({ method: 'popupSize', width: document.body.clientWidth, height: document.body.clientHeight });
+
+                            document.body.previousClientHeight = document.body.clientHeight;
+                            document.body.previousClientWidth = document.body.clientWidth;
+                        }
+                    }
+                    
+                    document.addEventListener('DOMNodeInserted', listener, false);
+                    document.addEventListener('DOMNodeRemoved', listener, false);
                 }
             }	
         },
@@ -554,8 +573,7 @@
                     icon: browser.config.browser_action.default_icon,
                     popup: {
                         href: browser.config.browser_action.popup,
-                        width: 470,
-                        height: 600
+                        height: 100
                     },
 
                     badge: {
@@ -572,19 +590,28 @@
             }
         }
     }
-
+    
     browser.getPageType();
 
     if (browser.isBackgroundPage) {
-        browser.loadConfiguration(function() {
-            if (browser.isOpera) {
-                browser._initializePopup();
-                browser._cacheMediaFiles();
-            } else if (browser.isSafari) {
-                browser._cacheMediaFiles();
-            }
-        });
+        setTimeout(function() {
+            browser.loadConfiguration(function() {
+                if (browser.isOpera) {
+                    browser._initializePopup();
+                    browser._cacheMediaFiles();
+                } else if (browser.isSafari) {
+                    browser._cacheMediaFiles();
+                }
+            });
+        }, 100);
     }
+
+    document.getElementsByTagName('html')[0].className += " " + (function(){         
+        return browser.isChrome ? "chrome" :
+               browser.isSafari ? "safari" :
+               browser.isOpera ? "opera" :
+               "";
+    }())
 
     
     window.browser = browser;

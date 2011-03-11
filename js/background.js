@@ -1,3 +1,6 @@
+browser.popupHeight = 400
+browser.popupWidth = 300
+
 var working = false;
 var canvasAnimation = new CanvasAnimation(document.getElementById('canvas_icon'), document.getElementById('minus_image'));
 
@@ -24,27 +27,12 @@ function createGalleryClick(data) {
 }
 
 
-function initContextMenu() { 
+function initContextMenu() {    
     var parent_menu = chrome.contextMenus.create({
         "title": "Upload to min.us", 
         "onclick" : createGalleryClick, 
         "contexts":["image"]
     });
-
-    /*
-    chrome.contextMenus.create({
-        "title" : "Add To Album", 
-        "parentId" : parent_menu, 
-        "onclick" : chooseGalleryClick, 
-        "contexts" : ["all"]
-    });
-
-    chrome.contextMenus.create({
-        "title" : "Upload To New Album", 
-        "parentId" : parent_menu, 
-        "contexts" : ["all"]
-    });
-    */
 }
 
 initContextMenu();
@@ -55,8 +43,8 @@ browser.addMessageListener(function(msg, sender){
         case 'takeScreenshot':
             working = true;
             canvasAnimation.animate();
-
-            chrome.tabs.getSelected(null, function(tab) {
+            
+            browser.tabs.getSelected(null, function(tab) {               
                 browser.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
                     var binaryData = atob(dataUrl.replace(/^data\:image\/png\;base64\,/,''));
                     
@@ -73,5 +61,28 @@ browser.addMessageListener(function(msg, sender){
                 });
             });
             break;
+
+        case 'setUsername':
+            window.localStorage['username'] = msg.username;
+
+            break;
     }
 });
+
+browser.onReady(function(){
+});
+
+Minus.getUsername(function(resp) {
+    if (!resp.error) {
+        window.localStorage['username'] = resp.username;
+    } else {
+        window.localStorage['username'] = "";
+    }
+});
+
+chrome.tabs.onUpdated.addListener(function(tab) {
+    if (tab.url && tab.url.match(/http:\/\/min\.us/)) {
+        chrome.tabs.executeScript(null, { file:"js/minus_auth.js" });
+    }
+});
+
