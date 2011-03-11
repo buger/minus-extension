@@ -96,12 +96,17 @@
             create: function(options) {
                 if (browser.isChrome) {
                     chrome.tabs.create(options);                    
+                } else if (browser.isSafari) {
+                    var tab = safari.application.activeBrowserWindow.openTab();
+                    tab.url = options.url;
                 }
             },
 
             getSelected: function(windowID, callback) {
                 if (browser.isChrome) {
                     chrome.tabs.getSelected(windowID, callback);
+                } else if (browser.isSafari) {
+                    callback(safari.application.activeBrowserWindow.activeTab)
                 }
             },
 
@@ -116,6 +121,8 @@
             captureVisibleTab: function(windowID, options, callback) {
                 if (browser.isChrome) {
                     chrome.tabs.captureVisibleTab(windowID, options, callback);
+                } else if (browser.isSafari) {
+                    callback(safari.application.activeBrowserWindow.activeTab.visibleContentsAsDataURL());
                 }
             },
 
@@ -161,7 +168,6 @@
                 page_type = opera.extension.broadcastMessage ? 'background' : 
                             window.isContentScript ? 'injected' : 
                             'popup';
-
             } else if (browser.isSafari) {
                 page_type = safari.extension.globalPage ? 'background' : 'script';
             }
@@ -171,7 +177,7 @@
 
                 console.log("Background page");
             }
-            
+
             return page_type;        
         },    
         
@@ -352,7 +358,7 @@
                     console.log("Received command", event);
                     
                     if (event.command == "toggle_popup") {
-                        safari.application.activeBrowserWindow.activeTab.page.dispatchMessage("toggle_popup");
+                        safari.application.activeBrowserWindow.activeTab.page.dispatchMessage("toggle_popup", {popup_url: browser.config.browser_action.popup});
                     }
                 }, false);                        
                 
@@ -372,10 +378,21 @@
                 
                 // In page is iframe (safair popup emulation), don't initialize it two times
                 if (window.top == window) {            
-                    browser.connected_ports.push(safari.self.tab);             
+                    browser.connected_ports.push(safari.self.tab);
                     safari.self.tab.dispatchMessage("connect");
                 } else {
                     browser.onReady();
+                    
+                    var listener = function () {
+                        window.top.postMessage({
+                            method: 'popup_resize', 
+                            width: document.body.offsetWidth,
+                            height: document.body.offsetHeight
+                        }, '*');
+                    }
+                                        
+                    document.addEventListener('DOMNodeInserted', listener, false);
+                    document.addEventListener('DOMNodeRemoved', listener, false);
                 }
             }		
         },
@@ -400,6 +417,7 @@
                         config: browser.config, 
                         extension_url: browser.extension_url
                     });
+                    opera.postError("sent message to popup");
                 }
                 
                 opera.extension.onmessage = function(event) {
@@ -431,7 +449,6 @@
             } else {
                 opera.extension.onmessage = function(event) {                        
                     console.log("Script::Received message: ", JSON.stringify(event.data));
-
                     if (typeof(event.data) == 'object' && event.data.method == 'connected' && event.data.source == 'background') {
                         browser._background_page = event.source;
                         browser.config = event.data.config;
@@ -443,7 +460,6 @@
                         });
                     }
                 }
-
                 if (browser.getPageType() === "popup") {
                     function listener() {
                         if (document.body.previousClientHeight !== document.body.clientHeight ||
@@ -612,7 +628,6 @@
                browser.isOpera ? "opera" :
                "";
     }())
-
     
     window.browser = browser;
 }(window));                    

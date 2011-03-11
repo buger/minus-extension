@@ -2,7 +2,7 @@
     if (window.top === window) {  
         var listener; 
     
-        function togglePopup() {
+        function togglePopup(popup_url) {
             var extension_id = safari.extension.baseURI.match(/safari-extension\:\/\/([^\/]*).*/)[1];
             var popup = document.getElementById(extension_id + '_popup');
         
@@ -24,14 +24,12 @@
                 clearInterval(listener);
                 
                 var style = document.createElement('style');
-                style.innerHTML = ".ext_popup { position: fixed; top: 0px; left: 0px; z-index: 2147483646; border: 0; -webkit-box-shadow: 0px 0px 5px 5px #888; box-shadow: 0px 0px 5px 5px #888;}";
+                style.innerHTML = ".ext_popup { position: fixed; overflow: hidden; top: 0px; left: 0px; z-index: 2147483646; border: 0; -webkit-box-shadow: 0px 0px 5px 5px #888; box-shadow: 0px 0px 5px 5px #888;}";
                 document.body.insertBefore(style, document.body.firstChild);
                 
                 var iframe = document.createElement('iframe');   
                 iframe.id = extension_id + "_popup";
-                iframe.src = safari.extension.baseURI + "new_popup.html";
-                iframe.width = 468;
-                iframe.height = 600;
+                iframe.src = safari.extension.baseURI + popup_url;
                 iframe.scrolling = 'none';
                 iframe.frameborder = '0';
                 iframe.className = "ext_popup";
@@ -42,10 +40,15 @@
                 popup = document.getElementById(extension_id + '_popup');
                 
                 document.addEventListener('click', function () {
+                    console.log('clicked');
+                    
                     popup.style.display = 'none';
                 });
             } else {                        
                 if (popup.style.display == 'none') {
+                    popup.src = popup.src;
+                    popup.width = 0;
+                    popup.height = 0;
                     popup.style.display = 'block';
                 } else {
                     popup.style.display = 'none';
@@ -84,7 +87,7 @@
             } else if (event.name == "toggle_popup") {
                 console.log("Toggling popup");
                 
-                togglePopup();
+                togglePopup(event.message.popup_url);
             }
         }, false);
         
@@ -97,5 +100,24 @@
         window.addEventListener('unload', function(){
             safari.self.tab.dispatchMessage("disconnect", {method:'loadRecources'});
         }, false);
+        
+        window.addEventListener("message", function(event){
+            if (event.origin.match(/^safari-extension:\/\/.*/)){                
+                var extension_id = safari.extension.baseURI.match(/safari-extension\:\/\/([^\/]*).*/)[1];
+                var popup = document.getElementById(extension_id + '_popup');                
+                
+                popup.width = event.data.width+5;
+                popup.height = event.data.height+5;
+            }
+        }, false);
+                
+        function handleContextMenu(event) {
+            var info = {
+                nodeName: event.target.nodeName,
+                srcUrl: event.target.src
+            };
+            safari.self.tab.setContextMenuEventUserInfo(event, info);
+        }
+        document.addEventListener("contextmenu", handleContextMenu, false);                       
     }
 })();

@@ -13,7 +13,9 @@ function chooseGalleryClick(data) {
 
 function createGalleryClick(data) {
     working = true;
-    canvasAnimation.animate();
+    if (browser.isChrome) {
+        canvasAnimation.animate();
+    }
 
     Minus.createGallery(function(gallery) {
         Minus.uploadItemFromURL(data.srcUrl, gallery.editor_id, 
@@ -27,12 +29,44 @@ function createGalleryClick(data) {
 }
 
 
-function initContextMenu() {    
-    var parent_menu = chrome.contextMenus.create({
-        "title": "Upload to min.us", 
-        "onclick" : createGalleryClick, 
-        "contexts":["image"]
+function initContextMenu() { 
+    if (browser.isChrome) {
+        chrome.contextMenus.create({
+            "title": "Upload to min.us", 
+            "onclick" : createGalleryClick, 
+            "contexts":["image"]
+        });
+    } else if(browser.isSafari) {
+        function handleContextMenu(event) {    
+            if (event.userInfo.nodeName === "IMG") {
+                event.contextMenu.appendContextMenuItem("context_menu_1", "Upload to Min.us");
+            }
+        }
+    
+        safari.application.addEventListener("contextmenu", handleContextMenu, false); 
+        
+        safari.application.addEventListener("command", function(event) {
+            if (event.command == "context_menu_1") {
+                createGalleryClick(event.userInfo);
+            }
+        }, false); 
+    }
+
+        
+    /*
+    chrome.contextMenus.create({
+        "title" : "Add To Album", 
+        "parentId" : parent_menu, 
+        "onclick" : chooseGalleryClick, 
+        "contexts" : ["all"]
     });
+
+    chrome.contextMenus.create({
+        "title" : "Upload To New Album", 
+        "parentId" : parent_menu, 
+        "contexts" : ["all"]
+    });
+    */
 }
 
 initContextMenu();
@@ -42,9 +76,12 @@ browser.addMessageListener(function(msg, sender){
     switch (msg.method) {
         case 'takeScreenshot':
             working = true;
-            canvasAnimation.animate();
             
-            browser.tabs.getSelected(null, function(tab) {               
+            if (browser.isChrome) {
+                canvasAnimation.animate();
+            }
+
+            browser.tabs.getSelected(null, function(tab) {
                 browser.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
                     var binaryData = atob(dataUrl.replace(/^data\:image\/png\;base64\,/,''));
                     
