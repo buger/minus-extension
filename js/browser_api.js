@@ -1,26 +1,28 @@
 ﻿(function(window){
+    function joinArgs(args) {
+        var result = [], length = args.length, i;
+
+        for (i = 0; i < length; i++) {
+            if (args[i] !== undefined) {
+                if (typeof (args[i]) === 'object') {
+                    try {
+                        result.push(JSON.stringify(args[i]));
+                    } catch (e) {
+                        result.push(args[i].toString());
+                    }
+                } else {
+                    result.push(args[i].toString());
+                }
+            }
+        }
+        
+        return result.join(', ');
+    }
+
     if (window.opera) {
         window.console = {};
         
-        function joinArgs(args) {
-            var result = [], length = args.length, i;
 
-            for (i = 0; i < length; i++) {
-                if (args[i] !== undefined) {
-                    if (typeof (args[i]) === 'object') {
-                        try {
-                            result.push(JSON.stringify(args[i]));
-                        } catch (e) {
-                            result.push(args[i].toString());
-                        }
-                    } else {
-                        result.push(args[i].toString());
-                    }
-                }
-            }
-            
-            return result.join(', ');
-        }
         
         function getErrorObject() {
             try { throw new Error(''); } catch (err) { return err; }
@@ -40,6 +42,8 @@
         });
     }
 
+
+
     Array.prototype.unique = function() {
         var r = new Array(), i, x;    
         o:for (i = 0, n = this.length; i < n; i++) {
@@ -55,11 +59,19 @@
         return r;
     }
 
+    if (navigator.userAgent.match('Firefox') !== undefined) {
+        window.console = {
+            log: function() {
+                browser.postMessage({ _api: true, method: "log", message: joinArgs(arguments) });
+            }
+        }
+    }
 
     var browser = {
         isChrome: typeof(window.chrome) === "object",
         isOpera:  typeof(window.opera) === "object",
         isSafari: typeof(window.safari) === "object",
+        isFirefox: navigator.userAgent.match('Firefox') !== undefined,
 
         _o_toolbarButton: null,
 
@@ -99,6 +111,10 @@
                 } else if (browser.isSafari) {
                     var tab = safari.application.activeBrowserWindow.openTab();
                     tab.url = options.url;
+                } else if (browser.isFirefox) {
+                    browser.postMessage({ method: "createTab", _api: true, url: options.url }, null, function(msg){
+                        callback(msg.response);
+                    })                    
                 }
             },
 
@@ -107,6 +123,10 @@
                     chrome.tabs.getSelected(windowID, callback);
                 } else if (browser.isSafari) {
                     callback(safari.application.activeBrowserWindow.activeTab)
+                } else if (browser.isFirefox) {
+                    browser.postMessage({ method: "activeTab", _api: true }, null, function(msg){
+                        callback(msg.response);
+                    })
                 }
             },
 
@@ -123,6 +143,10 @@
                     chrome.tabs.captureVisibleTab(windowID, options, callback);
                 } else if (browser.isSafari) {
                     callback(safari.application.activeBrowserWindow.activeTab.visibleContentsAsDataURL());
+                } else if (browser.isFirefox) {
+                    browser.postMessage({ _api:true, method: "captureVisibleTab" }, null, function(msg) {
+                        callback(msg.response);
+                    });
                 }
             },
 
@@ -154,31 +178,33 @@
         },
 
         isBackgroundPage: null,
+        page_type: null,
 
-        getPageType: function(){        
-            var page_type;
+        getPageType: function(){   
+            if (browser.page_type)
+                return browser.page_type;
 
             if (browser.isChrome) {
                 try {
-                    page_type = chrome.extension.getBackgroundPage() == window ? 'background' : 'script';
+                    browser.page_type = chrome.extension.getBackgroundPage() == window ? 'background' : 'script';
                 } catch(e) {
                     page_type = 'script';
                 }
             } else if (browser.isOpera) {
-                page_type = opera.extension.broadcastMessage ? 'background' : 
-                            window.isContentScript ? 'injected' : 
-                            'popup';
+                browser.page_type = opera.extension.broadcastMessage ? 'background' : 
+                                    window.isContentScript ? 'injected' : 
+                                    'popup';
             } else if (browser.isSafari) {
-                page_type = safari.extension.globalPage ? 'background' : 'script';
+                browser.page_type = safari.extension.globalPage ? 'background' : 'script';
             }
 
-            if (page_type == 'background') {
+            if (browser.page_type == 'background') {
                 browser.isBackgroundPage = true;
 
                 console.log("Background page");
             }
 
-            return page_type;        
+            return browser.page_type;        
         },    
         
         _isNetworkInitialized: false,
@@ -268,6 +294,8 @@
                 browser._o_addMessageListener(listener);    
             } else if (browser.isSafari) {
                 browser._s_addMessageListener(listener);
+            } else if (browser.isFirefox) {
+                browser._f_addMessageListener(listener);
             }
         },
 
@@ -315,6 +343,70 @@
         _listeners: [],
         
         _listener_initialized: false,
+        
+        _f_message_in: null,
+        _f_message_out: null,
+
+        _f_addMessageListener: function(listener) {
+            browser._listeners.push(listener);
+            
+            if (browser._listener_initialized) {
+                return;
+            } else {
+                browser._listener_initialized = true;
+            }
+                        
+            function waitForDispatcher() {
+                browser._f_message_bridge = document.getElementById('ff_message_bridge');
+
+                if (!browser._f_message_bridge)
+                    return setTimeout(waitForDispatcher, 50);
+
+                if (document.body.className.match(/background/)) {
+                    browser.page_type = "background";
+                    browser.isBackgroundPage = true;
+
+                    console.log("I Am background page!");
+                }
+
+                setInterval(function(){
+                    var messages = browser._f_message_bridge.querySelectorAll('.to_page');    
+                    var length = messages.length;
+
+                    if (length > 0) {
+                        for(var i=0; i<length; i++) {
+                            var msg = messages[i].innerHTML;                            
+                            msg = msg[0] == '{' ? JSON.parse(msg) : msg;
+                            browser._f_message_bridge.removeChild(messages[i]);
+
+                            browser._listeners.forEach(function(fn) {
+                                fn(msg, browser);                
+                            })
+                        }
+                    }
+                }, 50);
+
+                browser.onReady();
+
+                if (!browser.isBackgroundPage) {
+                    var l = function (evt) {
+                        if (evt.target.parentNode.id != "ff_message_bridge") {
+                            browser.postMessage({
+                                _api: true,
+                                method: 'popupResize', 
+                                width: document.body.offsetWidth,
+                                height: document.body.offsetHeight
+                            });
+                        }
+                    }
+                                        
+                    document.addEventListener('DOMNodeInserted', l, false);
+                    document.addEventListener('DOMNodeRemoved', l, false);
+                }
+            };
+
+            waitForDispatcher();            
+        },
         
         _s_addMessageListener: function(listener) {
             browser._listeners.push(listener);
@@ -477,17 +569,21 @@
             }	
         },
 
-        postMessage: function(message, dest) {
-            if (dest) {
+        postMessage: function(message, dest, callback) {
+            if (dest && !browser.isFirefox) {
+                message.__id = new Date().getTime();
+
                 console.log("Posting message ", message, " to ", dest);
             
                 browser.isSafari ? dest.dispatchMessage("_method", message) : dest.postMessage(message);            
             } else {
-                browser.broadcastMessage(message);
+                browser.broadcastMessage(message, callback);
             }
         },
 
-        broadcastMessage: function(message) {
+        broadcastMessage: function(message, callback) {
+            message.__id = new Date().getTime();
+
             if (browser.isChrome) {
                 var length = browser.connected_ports.length;
 
@@ -510,6 +606,29 @@
                 } else {
                     safari.self.tab.dispatchMessage("_message", message);
                 }
+            } else if (browser.isFirefox) {
+                if (!browser._f_message_bridge)
+                    return setTimeout(function(){ browser.broadcastMessage(message) }, 50);
+                
+                
+                if (callback) {            
+                    message.reply = true;
+
+                    var l = function(_msg, _sender) {
+                        if (_msg.__id === message.__id) {
+                            callback(_msg, _sender);
+
+                            var idx = browser._listeners.indexOf(l);                            
+                            browser._listeners.splice(idx, 1);
+                        }
+                    }                    
+                    browser.addMessageListener(l);
+                }
+
+                var _m = document.createElement('textarea');
+                _m.className = 'from_page';
+                _m.innerHTML = typeof(message) == "string" ? message : JSON.stringify(message);
+                browser._f_message_bridge.appendChild(_m);                                
             }
         },
 

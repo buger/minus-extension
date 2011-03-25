@@ -44,13 +44,12 @@ function updateGalleries() {
 }
 
 browser.addMessageListener(function(msg, sender) {
-    console.log("Received message", msg, sender);
+    $('#loader').hide();
 });
 
 browser.onReady(function(){
     
 });
-
 
 
 $('#take_screenshot').live('click', function(){
@@ -62,7 +61,7 @@ $('#take_screenshot').live('click', function(){
 $(document).ready(function() {
     updateGalleries();
 
-    var user = window.localStorage['username'];
+    var user = window.store.get('username');
 
     if (user && user != "") {
         $('#user').html(user)        
@@ -78,5 +77,3 @@ $(document).ready(function() {
         $('#signout').hide();
     }
 });
-
-

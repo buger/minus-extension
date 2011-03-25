@@ -145,13 +145,13 @@
         console.log("new options:", new_options, options);
 
         new_options.onSuccess = function(resp, xhr){
-            console.debug("Method '%s' called succesefully", method, options, resp);
+            console.log("Method '%s' called succesefully", method, options, resp);
             
             (options.onSuccess || emptyFunc)(resp, xhr);        
         }
 
         new_options.onError = function(resp, xhr){
-            console.debug("Error while calling method '%s'", method, options, resp);
+            console.log("Error while calling method '%s'", method, options, resp);
 
             (options.onError || emptyFunc)(resp, xhr);        
         }

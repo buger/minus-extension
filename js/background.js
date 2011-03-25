@@ -31,7 +31,7 @@ function createGalleryClick(data) {
 
 function initContextMenu() { 
     if (browser.isChrome) {
-        chrome.contextMenus.create({
+        browser.contextMenus.create({
             "title": "Upload to min.us", 
             "onclick" : createGalleryClick, 
             "contexts":["image"]
@@ -80,11 +80,11 @@ browser.addMessageListener(function(msg, sender){
             if (browser.isChrome) {
                 canvasAnimation.animate();
             }
-
+                        
             browser.tabs.getSelected(null, function(tab) {
                 browser.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
                     var binaryData = atob(dataUrl.replace(/^data\:image\/png\;base64\,/,''));
-                    
+
                     Minus.createGallery(function(gallery) {
                         Minus.uploadItem(gallery.editor_id, tab.title+".png", "image/png", binaryData, 
                             function(resp){
@@ -92,6 +92,8 @@ browser.addMessageListener(function(msg, sender){
 
                                 if (!resp.error)
                                     browser.tabs.create({ url: "http://min.us/m"+gallery.editor_id });
+
+                                browser.postMessage({ method: "screenshotComplete" });
                             }
                         );
                     });
@@ -111,15 +113,16 @@ browser.onReady(function(){
 
 Minus.getUsername(function(resp) {
     if (!resp.error) {
-        window.localStorage['username'] = resp.username;
+        window.store.set('username', resp.username);
     } else {
-        window.localStorage['username'] = "";
+        window.store.set('username', "");
     }
 });
 
-chrome.tabs.onUpdated.addListener(function(tab) {
-    if (tab.url && tab.url.match(/http:\/\/min\.us/)) {
-        chrome.tabs.executeScript(null, { file:"js/minus_auth.js" });
-    }
-});
+if (window.chrome) 
+    chrome.tabs.onUpdated.addListener(function(tab) {
+        if (tab.url && tab.url.match(/http:\/\/min\.us/)) {
+            chrome.tabs.executeScript(null, { file:"js/minus_auth.js" });
+        }
+    });
 
