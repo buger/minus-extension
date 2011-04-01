@@ -44,8 +44,12 @@ CanvasAnimation.prototype.drawIconAtRotation = function() {
   this.canvasContext_.rotate(2 * Math.PI * this.getSector(this.rotation_));
   this.canvasContext_.drawImage(this.loggedInImage_, -Math.ceil(this.w / 2), -Math.ceil(this.h / 2), 19, 19);
   this.canvasContext_.restore();
-  chrome.browserAction.setIcon(
-      {imageData: this.canvasContext_.getImageData(0, 0, this.w, this.h)});
+  if (browser.isChrome) {
+      browser.toolbarItem.setIcon(
+          {imageData: this.canvasContext_.getImageData(0, 0, this.w, this.h)});
+  } else if (browser.isFirefox) {
+      browser.toolbarItem.setIcon({ imageData: this.canvas_.toDataURL("image/png") });
+  }
 };
 
 /**

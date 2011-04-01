@@ -92,7 +92,12 @@
                 }
             },
 
-            setIcon: function(icon){
+            setIcon: function(options){
+                if (browser.isChrome) {
+                    chrome.browserAction.setIcon(options);
+                } else {
+                    browser.postMessage({ method: "setIcon", _api: true, imageData: options.imageData });
+                }
             },
 
             setBackgroundColor: function(color) {
@@ -159,7 +164,21 @@
                     }
                 });
             }
-        },        
+        },     
+
+        contextMenus: {
+            create: function(options) {
+                if (browser.isChrome) {
+                    chrome.contextMenus.create(options)
+                } else if (browser.isFirefox) {
+                    browser.postMessage({ _api:true, method: "createContextMenus", event_listener: true, options: options }, null, function(msg) {
+                        console.log('calling on click');
+                        if (options.onclick)
+                            options.onclick(msg.response);
+                    });
+                }
+            }
+        },
 
         extension: {
             getURL: function(url) {
@@ -367,6 +386,22 @@
                     browser.isBackgroundPage = true;
 
                     console.log("I Am background page!");
+                } else if (document.body.className.match(/popup/)) {
+                    browser.page_type = "popup";
+
+                    document.addEventListener('click', function(evt) {
+                        if (evt.target.nodeName == 'A' && evt.target.target == "_blank") {
+                            if (evt && evt.preventDefault)
+                                evt.preventDefault();
+
+                            evt.stopPropagation();
+                            evt.returnValue = false;
+
+                            browser.tabs.create({ url:evt.target.href });
+
+                            return false;
+                        }
+                    }, false);
                 }
 
                 setInterval(function(){
@@ -388,9 +423,13 @@
 
                 browser.onReady();
 
-                if (!browser.isBackgroundPage) {
+                console.log("Document:", document.body.className, browser.page_type);
+        
+                if (browser.page_type == "popup") {
                     var l = function (evt) {
-                        if (evt.target.parentNode.id != "ff_message_bridge") {
+                        if (evt === undefined || evt.target.parentNode.id != "ff_message_bridge") {
+                            console.log("Sending resize message");
+
                             browser.postMessage({
                                 _api: true,
                                 method: 'popupResize', 
@@ -399,7 +438,9 @@
                             });
                         }
                     }
-                                        
+                    
+                    l();
+                    document.addEventListener('DOMContentLoaded', l, false);
                     document.addEventListener('DOMNodeInserted', l, false);
                     document.addEventListener('DOMNodeRemoved', l, false);
                 }
@@ -610,18 +651,24 @@
                 if (!browser._f_message_bridge)
                     return setTimeout(function(){ browser.broadcastMessage(message) }, 50);
                 
-                
-                if (callback) {            
-                    message.reply = true;
+                if (callback) {
+                    console.log("Adding message listener", message);
+
+                    if (!message.event_listener)
+                        message.reply = true;
 
                     var l = function(_msg, _sender) {
                         if (_msg.__id === message.__id) {
                             callback(_msg, _sender);
 
-                            var idx = browser._listeners.indexOf(l);                            
-                            browser._listeners.splice(idx, 1);
+                            if (!message.event_listener) {
+                                console.log("Deleting message listener:", _msg);
+                                var idx = browser._listeners.indexOf(l);                            
+                                browser._listeners.splice(idx, 1);
+                            }
                         }
-                    }                    
+                    }              
+                    
                     browser.addMessageListener(l);
                 }
 

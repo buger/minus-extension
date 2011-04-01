@@ -63,11 +63,13 @@ body {
     
     background: #efefef;
     background: -webkit-gradient(linear, left top, left bottom, from(white), to(#EFEFEF));
+    background: -moz-linear-gradient(top, white, #EFEFEF);
 }
 
 #my_galleries li:hover {
     background: #ccc;
     background: -webkit-gradient(linear, left top, left bottom, from(#EFEFEF), to(#CCCCCC));
+    background: -moz-linear-gradient(top, #EFEFEF, #CCCCCC);
     cursor: default;
 }
 
@@ -121,6 +123,7 @@ a.button {
     
     background: #efefef;
     background: -webkit-gradient(linear, left top, left bottom, from(#EFEFEF), to(#CCCCCC));
+    background: -moz-linear-gradient(top, #EFEFEF, #CCCCCC);
 }
 
 a.button:hover {
@@ -128,6 +131,7 @@ a.button:hover {
     
     background: #ccc;
     background: -webkit-gradient(linear, left top, left bottom, from(#EEEEEE), to(#AAAAAA));
+    background: -moz-linear-gradient(top, #EEEEEE, #AAAAAA);
     
     color: #333;
 }
@@ -200,13 +204,13 @@ a.button:hover {
 }
 
 #loader div {
-    margin-top: 30%;
+    margin-top: 25%;
     background: url(../images/ajax-loader.gif) bottom center no-repeat;
     margin-left: auto;
     margin-right: auto;
 
-    width: 250px;
-    height: 40px;
+    width: 200px;
+    height: 20px;
     text-align: center;
 }
 

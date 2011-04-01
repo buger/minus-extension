@@ -13,15 +13,27 @@ function inputForShare(selector) {
 
 function updateGalleries() {
     Minus.myGalleries(function(resp) {            
+        if (!resp.galleries)
+            return false 
+
         if (resp.galleries.length === 0) {
             $('#my_galleries span').html(' ');
         } else {
+            $("#galleries_container").remove()
+
+            $("<div id='galleries_container'><div id='my_galleries'></div></div").insertAfter($("#latest_file"));
+
             var html = $('#galleries_template').tmpl({galleries: resp.galleries});        
             $('#my_galleries').html(html);        
-            
-            $("#galleries_container").jScrollPane({
-                maintainPosition: true
-            }); 
+
+            var pane = $("#galleries_container").data('jsp');
+            if (pane) {
+                pane.reinitialise(); 
+            } else {
+                $("#galleries_container").jScrollPane({
+                    maintainPosition: true
+                }); 
+            }
         }
 
         $('#galleries_header').html("Galleries ("+resp.galleries.length+")");
@@ -45,10 +57,12 @@ function updateGalleries() {
 
 browser.addMessageListener(function(msg, sender) {
     $('#loader').hide();
+
+    updateUI();
 });
 
 browser.onReady(function(){
-    
+  
 });
 
 
@@ -58,7 +72,7 @@ $('#take_screenshot').live('click', function(){
     browser.postMessage({ method: 'takeScreenshot' });
 });
 
-$(document).ready(function() {
+function updateUI() {
     updateGalleries();
 
     var user = window.store.get('username');
@@ -66,6 +80,8 @@ $(document).ready(function() {
     if (user && user != "") {
         $('#user').html(user)        
             .attr('href','u/'+user+'/pref');
+        
+        $('#galleries_header').css({ right: '60px' });
 
         $('#signout').show();
     } else {
@@ -76,4 +92,8 @@ $(document).ready(function() {
         
         $('#signout').hide();
     }
+}
+
+$(document).ready(function() {
+    updateUI();
 });

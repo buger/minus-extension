@@ -2,7 +2,7 @@ browser.addMessageListener(function(){
 
 });
 
-var user = $('#minus_user').text().trim();
+var user = $('#menu_me_link').text().trim();
 
 browser.onReady(function(){
     browser.postMessage({ method: "setUsername", username: user })

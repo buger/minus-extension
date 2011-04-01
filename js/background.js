@@ -13,9 +13,7 @@ function chooseGalleryClick(data) {
 
 function createGalleryClick(data) {
     working = true;
-    if (browser.isChrome) {
-        canvasAnimation.animate();
-    }
+    canvasAnimation.animate();
 
     Minus.createGallery(function(gallery) {
         Minus.uploadItemFromURL(data.srcUrl, gallery.editor_id, 
@@ -30,7 +28,7 @@ function createGalleryClick(data) {
 
 
 function initContextMenu() { 
-    if (browser.isChrome) {
+    if (browser.isChrome || browser.isFirefox) {
         browser.contextMenus.create({
             "title": "Upload to min.us", 
             "onclick" : createGalleryClick, 
@@ -69,17 +67,12 @@ function initContextMenu() {
     */
 }
 
-initContextMenu();
-
-
 browser.addMessageListener(function(msg, sender){
     switch (msg.method) {
         case 'takeScreenshot':
             working = true;
             
-            if (browser.isChrome) {
-                canvasAnimation.animate();
-            }
+            canvasAnimation.animate();
                         
             browser.tabs.getSelected(null, function(tab) {
                 browser.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
@@ -102,13 +95,17 @@ browser.addMessageListener(function(msg, sender){
             break;
 
         case 'setUsername':
-            window.localStorage['username'] = msg.username;
+            console.log("setting username", msg.username);
+            store.set('username', msg.username);
+
+            browser.postMessage({ method: 'setUsername', username: msg.username });
 
             break;
     }
 });
 
 browser.onReady(function(){
+    initContextMenu();
 });
 
 Minus.getUsername(function(resp) {
