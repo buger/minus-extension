@@ -22,8 +22,6 @@
     if (window.opera) {
         window.console = {};
         
-
-        
         function getErrorObject() {
             try { throw new Error(''); } catch (err) { return err; }
         }
@@ -59,7 +57,8 @@
         return r;
     }
 
-    if (navigator.userAgent.match('Firefox') !== undefined) {
+    if (navigator.userAgent.match('Firefox') != undefined) {
+        console.log(navigator.userAgent); 
         window.console = {
             log: function() {
                 browser.postMessage({ _api: true, method: "log", message: joinArgs(arguments) });
@@ -71,7 +70,7 @@
         isChrome: typeof(window.chrome) === "object",
         isOpera:  typeof(window.opera) === "object",
         isSafari: typeof(window.safari) === "object",
-        isFirefox: navigator.userAgent.match('Firefox') !== undefined,
+        isFirefox: navigator.userAgent.match('Firefox') != undefined,
 
         _o_toolbarButton: null,
 
@@ -110,7 +109,7 @@
         },
 
         tabs: {
-            create: function(options) {
+            create: function(options, callback) {
                 if (browser.isChrome) {
                     chrome.tabs.create(options);                    
                 } else if (browser.isSafari) {
@@ -118,7 +117,8 @@
                     tab.url = options.url;
                 } else if (browser.isFirefox) {
                     browser.postMessage({ method: "createTab", _api: true, url: options.url }, null, function(msg){
-                        callback(msg.response);
+                        if (callback)
+                            callback(msg.response);
                     })                    
                 }
             },
@@ -427,22 +427,17 @@
         
                 if (browser.page_type == "popup") {
                     var l = function (evt) {
-                        if (evt === undefined || evt.target.parentNode.id != "ff_message_bridge") {
-                            console.log("Sending resize message");
-
-                            browser.postMessage({
-                                _api: true,
-                                method: 'popupResize', 
-                                width: document.body.offsetWidth,
-                                height: document.body.offsetHeight
-                            });
-                        }
+                        browser.postMessage({
+                            _api: true,
+                            method: 'popupResize', 
+                            width: document.body.offsetWidth,
+                            height: document.body.offsetHeight
+                        });
+                        
+                        setTimeout(l, 500);
                     }
-                    
-                    l();
-                    document.addEventListener('DOMContentLoaded', l, false);
-                    document.addEventListener('DOMNodeInserted', l, false);
-                    document.addEventListener('DOMNodeRemoved', l, false);
+
+                    l();    
                 }
             };
 

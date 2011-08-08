@@ -1,3 +1,7 @@
+* {
+    outline: 0 !important;
+}
+
 input {
     border: 1px solid #ccc;
 }
@@ -13,23 +17,45 @@ a:hover {
 }
 
 body {
-    width: 300px;
+    width: 400px;
     margin: 0;
     padding-top: 20px;
     font-family: arial;
     font-size: 14px;
+
+    overflow: hidden;
 }
 
 #header {
-    height: 40px;
+    height: 50px;
     padding-left: 10px;
 }
 
-#latest_file {
-    padding: 5px;
-    font-size: 13px;
-    display: none;
+#timeline {
+    padding-left: 10px;
+    padding-top: 15px;
 }
+
+#timeline span {
+    font-size: 16px;
+    margin-right: 15px;
+    font-weight: bold;
+    opacity: 0.8;
+}
+
+#timeline a {
+    font-size: 16px;
+    color: #333;
+    margin-right: 10px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+#timeline a.active {
+    font-weight: bold;
+    opacity: 1;
+}
+
 
 #latest_file input {
     width: 210px;
@@ -39,9 +65,11 @@ body {
 #galleries_container {
     margin: 0;
     height: auto;
-    max-height: 300px;
+    max-height: 400px;
     width: 100%;
     overflow-x: hidden;
+    
+    margin-top: 10px;
 }
 
 #my_galleries {
@@ -54,30 +82,74 @@ body {
 
 #my_galleries li {
     padding: 5px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    margin-top: 3px;
+    padding-top: 10px;
+    border-radius: 2px;
+
+    border-bottom: 1px solid #aaa;
+
     position: relative;
+
     margin-left: 10px;
     margin-right: 10px;
     
-    background: #efefef;
-    background: -webkit-gradient(linear, left top, left bottom, from(white), to(#EFEFEF));
-    background: -moz-linear-gradient(top, white, #EFEFEF);
+    background: #fff;
 }
 
 #my_galleries li:hover {
-    background: #ccc;
-    background: -webkit-gradient(linear, left top, left bottom, from(#EFEFEF), to(#CCCCCC));
-    background: -moz-linear-gradient(top, #EFEFEF, #CCCCCC);
+    background-color: #eee;
+}
+
+#my_galleries li:hover .name {
+    opacity: 1;
+}
+
+#my_galleries li.loader {
+    background: url(../images/loading.gif) center no-repeat;
+    border: none;
+    height: 30px;
+}
+
+#my_galleries li .preview {
+    padding-right: 10px;
+}
+
+#my_galleries li .action {
+    position: relative;
+}
+
+#my_galleries li .action a {
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+#my_galleries li .action a:hover {
+    opacity: 1;
+}
+
+#my_galleries li .creator {
+    font-size: 12px;
+    color: #999;
     cursor: default;
 }
 
+#my_galleries li .creator a {
+    color: #333;
+    cursor: pointer;
+}
+
 #my_galleries .name {
-    max-width: 265px;
+    max-width: 245px;
     display: inline-block;
     overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
+    color: #000;
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+#my_galleries .name:hover {
+    opacity: 1;
 }
 
 #my_galleries .share_link {
@@ -98,16 +170,27 @@ body {
 }
 
 #my_galleries .items {
-    margin-right: 10px;
+    margin-right: 5px;
     font-size: 10px;
-    font-family: Verdana, sans-serif;
-    color: #666;
+    font-family: Arial;
+    color: #999;
     white-space: nowrap;
+    cursor: default;
 }
 
-#my_galleries .items.count {
-    display: inline-block;
-    width: 40px;
+#take_screenshot {
+    display: block;
+    width: 350px;
+
+    font-size: 25px;
+    font-weight: bold;
+
+    opacity: 0.8;
+}
+
+#take_screenshot.loading {
+    text-indent: -99999px;
+    background: url(../images/loading.gif) center no-repeat;
 }
 
 h4 {
@@ -119,19 +202,19 @@ a.button {
     padding: 10px 14px;
     margin-right: 2px;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 2px;
+
+    font-size: 20px;
     
-    background: #efefef;
-    background: -webkit-gradient(linear, left top, left bottom, from(#EFEFEF), to(#CCCCCC));
-    background: -moz-linear-gradient(top, #EFEFEF, #CCCCCC);
+    background: #fff;
+
+    text-align: center;
 }
 
 a.button:hover {
     text-decoration: none;
     
-    background: #ccc;
-    background: -webkit-gradient(linear, left top, left bottom, from(#EEEEEE), to(#AAAAAA));
-    background: -moz-linear-gradient(top, #EEEEEE, #AAAAAA);
+    background: #eee;
     
     color: #333;
 }
@@ -168,10 +251,13 @@ a.button:hover {
 
 #user, #signout {
     font-size: 14px;
-    color: #737373;
+    color: #000;
     cursor: pointer;
     font-weight: bold;
     text-decoration: none;   
+    float: right;
+    margin-right: 10px;
+    opacity: 0.8;
 }
 
 #user {
@@ -181,7 +267,7 @@ a.button:hover {
 
 #user:hover, #signout:hover {
     text-decoration: underline;
-    color: #2200C1;
+    opacity: 1;
 }
 
 #signout {

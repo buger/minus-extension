@@ -1,13 +1,13 @@
 {
    "name": "Minus",
-   "version": "0.1.1",
-   "description": "Min.us - Share simply",
+   "version": "0.9",
+   "description": "Minus - Share simply",
    "icons": {
-      "16": "images/logo_37.png",
+      "16": "images/logo_small.png",
       "128": "images/logo_128.png"
    },
    "browser_action": {
-     "default_icon": "images/logo_37.png", 
+     "default_icon": "images/logo_small.png", 
      "popup": "popup.html"        
    },
    "content_scripts": [{
@@ -17,7 +17,7 @@
    },
    {
       "js": ["js/minus_auth.js"],
-      "matches": ["http://min.us/*"]
+      "matches": ["http://min.us/*","http://minus.com/*"]
    }],
    "background_page": "background.html",
    "options_page": "options.html",

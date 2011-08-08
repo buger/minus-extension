@@ -1,99 +1,160 @@
-function inputForShare(selector) {
-    $(selector)
-        .live('click', function() {            
-            this.select();
-        })
-        .live('keydown', function(evt) {
-            return false;
-        })
-        .live('mousemove', function(evt) {
-            this.select();
-        }); 
-}
+(function(){
+    function inputForShare(selector) {
+        $(selector)
+            .live('click', function() {            
+                this.select();
+            })
+            .live('keydown', function(evt) {
+                return false;
+            })
+            .live('mousemove', function(evt) {
+                this.select();
+            }); 
+    }
 
-function updateGalleries() {
-    Minus.myGalleries(function(resp) {            
-        if (!resp.galleries)
-            return false 
+    function reinitializePane() {        
+        var pane = $("#galleries_container").data('jsp');
+        if (pane)
+            pane.reinitialise(); 
+    }
+    
+    var current_page = 1;
+    var total_pages;
+    var timeline_type = window.store.get('timeline_type') || 'history';
+    
+    $('#timeline a').live('click', function(){
+        current_page = 1;
+        timeline_type = $(this).data('timeline');
+        window.store.set('timeline_type', timeline_type);
 
-        if (resp.galleries.length === 0) {
-            $('#my_galleries span').html(' ');
-        } else {
-            $("#galleries_container").remove()
+        updateTimeline();
+    });
 
-            $("<div id='galleries_container'><div id='my_galleries'></div></div").insertAfter($("#latest_file"));
+    function updateTimeline() {
+        $('#timeline a.active').removeClass('active');
+        $('#timeline a[data-timeline='+timeline_type+']').addClass('active');
+        
+        $('#my_galleries').html("<li class='loader'></li>");
+
+        reinitializePane();
+
+        updateGalleries();
+    }
+
+    function updateGalleries() {
+        Minus.timeline(timeline_type, current_page, function(resp) {
+            total_pages = resp.total_pages;
+
+            $("#my_galleries .loader").remove();
 
             var html = $('#galleries_template').tmpl({galleries: resp.galleries});        
-            $('#my_galleries').html(html);        
+            $('#my_galleries').append(html);
+
+            var loaded_images = 0;
+            var imageLoaded = function() {
+                loaded_images += 1;
+                
+                if (loaded_images == resp.galleries.length) {
+                    reinitializePane()
+                }
+            }
+            
+            $('#my_galleries .preview img').each(function(){
+                var img = this;
+
+                var img_preloader = new Image;
+                img_preloader.src = $(img).data('image');
+                    
+                img_preloader.onload = function(){
+                    if (img_preloader.naturalHeight == 0) {                            
+                        img.src = "http://minus.com/smedia/minus/images/file_icons/generic_archive.png";
+                    } else {                        
+                        img.src = img_preloader.src; 
+                    }
+
+                    imageLoaded();
+                }
+
+                img_preloader.onerror = function(){
+                    img.src = "http://minus.com/smedia/minus/images/file_icons/generic_archive.png";
+
+                    imageLoaded();
+                }
+            });
 
             var pane = $("#galleries_container").data('jsp');
+
             if (pane) {
                 pane.reinitialise(); 
             } else {
-                $("#galleries_container").jScrollPane({
-                    maintainPosition: true
-                }); 
+                $("#galleries_container")
+                    .unbind('jsp-scroll-y')
+                    .bind(                    
+                        'jsp-scroll-y',
+                        function(event, scrollPositionX, isAtLeft, isAtRight) {
+                            // Load next page
+                            if (isAtRight) {
+                                if (current_page < total_pages) {
+                                    current_page += 1;
+
+                                    $('#my_galleries').append("<li class='loader'></li>");
+
+                                    updateGalleries(current_page);
+                                }
+                                
+                                reinitializePane();
+                            }
+                        }
+                    )
+                    .jScrollPane({
+                        maintainPosition: true
+                    });
             }
-        }
 
-        $('#galleries_header').html("Galleries ("+resp.galleries.length+")");
+        });
+    }
 
-        if (false && resp.galleries[0]) {
-            Minus.getItems(resp.galleries[0].reader_id, 
-                function(gallery) {
-                    if (gallery.ITEMS_GALLERY.length > 0) {
-                        $('#latest_file').show()
-                            .find('input')
-                            .val(gallery.ITEMS_GALLERY[0])
-                            .select()
-                            .focus();
-                        
-                    }
-                }
-            );
+    browser.addMessageListener(function(msg, sender) {
+        $('#take_screenshot').removeClass('loading');
+
+        if (msg.method == "screenshotComplete") {
+            updateTimeline();
+        } else {
+            updateUser();
         }
     });
-}
 
-browser.addMessageListener(function(msg, sender) {
-    $('#loader').hide();
-
-    updateUI();
-});
-
-browser.onReady(function(){
-  
-});
+    browser.onReady(function(){
+      
+    });
 
 
-$('#take_screenshot').live('click', function(){
-    $('#loader').show();
+    $('#take_screenshot').live('click', function(){
+        if (!$(this).hasClass('loading')) {
+            $(this).addClass('loading');
+            browser.postMessage({ method: 'takeScreenshot' });
+        }
+    });
 
-    browser.postMessage({ method: 'takeScreenshot' });
-});
+    function updateUser() {
+        var user = window.store.get('username');
 
-function updateUI() {
-    updateGalleries();
-
-    var user = window.store.get('username');
-
-    if (user && user != "") {
-        $('#user').html(user)        
-            .attr('href','u/'+user+'/pref');
-        
-        $('#galleries_header').css({ right: '60px' });
-
-        $('#signout').show();
-    } else {
-        $('#user').html('Sign In')
-            .attr('href','http://min.us');
-
-        $('#galleries_header').css({ right: '5px' });
-        
-        $('#signout').hide();
+        if (user && user != "") {
+            $('#user').html(user)        
+                .attr('href','http://minus.com/u/'+user);
+        } else {
+            $('#user').html('Sign In')
+                .attr('href','http://minus.com');
+        }
     }
-}
 
-$(document).ready(function() {
-    updateUI();
-});
+    function updateUI() {
+        updateTimeline();
+        updateUser();
+    }
+
+    $(document).ready(function() {    
+        setTimeout(updateUI, 0);
+    });
+
+}())

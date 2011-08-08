@@ -1,58 +1,87 @@
 <!DOCTYPE HTML>
 <html>
     <head>
-        <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.3.0/build/cssreset/reset-min.css">
+        <link rel="stylesheet" type="text/css" href="css/reset-min.css">
         <link rel="stylesheet" href="css/jquery.jscrollpane.css" />
         <link rel="stylesheet" href="css/popup.css" />
 
         <script id="galleries_template" type="text/x-jquery-tmpl"> 
             {{each galleries}}
-            <li>
-                <a class='name' target='_blank' href='http://min.us/m${$value.reader_id}'>${$value.name||'Untitled'}</a>
-                <br />
-                <span class="items count">
-                    {{if $value.item_count>0}}
-                        Items:&nbsp;${$value.item_count}
-                    {{else}}
-                        Empty
-                    {{/if}}
-                </span>
-                <span class="items">
-                    Last visit: ${$value.last_visit}
-                </span>
-            
-                {{if $value.editor_id != 'Unavailable'}}
-                <a href="http://min.us/m${$value.editor_id}" class='edit' target='_blank'><img src='http://min.us/smedia/minus/lightpencil.png' width='12px'/>edit</a>
-                {{/if}}
-                    
-                <input style="display:none" class='share_link' value='http://min.us/m${$value.reader_id}'/>
+            <li {{if $value.editor_id == 'Unavailable'}}class="not_editable"{{/if}}>
+                <table cellspacing="0" cellpadding="0" width="100%">
+                    <tr>                    
+                        <td width="80px" class="preview" rowspan="3" valign="top" align="center">
+                            <a target='_blank' href='http://minus.com/m${$value.reader_id}'><img data-image='http://i.minus.com/k${$value.thumbnail_id}' src="images/loading.gif" style="max-width: 80px; max-height: 60px;" /></a>
+                        </td>
+                        <td class="header">
+                            <a class='name' target='_blank' href='http://minus.com/m${$value.reader_id}'>${$value.name||'Untitled'}</a>
+                        </td>
+                        <td class="action" rowspan="3" valign="center" align="right">
+                            <a><img src="images/more_content.png" width="25px" /></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="creator">
+                            <span>by: </span><a href='http://minus.com/u/${$value.creator}' target='_blank'>${$value.creator}</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="bottom" style="position: relative;">
+                            <span class="items count">                    
+                            {{if $value.item_count>0}}
+                                {{if $value.item_count == 1 }}
+                                    1 item
+                                {{else}}
+                                    ${$value.item_count} items
+                                {{/if}}
+                            {{else}}
+                                empty
+                            {{/if}}
+                            </span>
+                            <span class="items clicks">                    
+                            {{if $value.clicks>0}}
+                                {{if $value.clicks == 1 }}
+                                    1 view
+                                {{else}}
+                                    ${$value.clicks} views
+                                {{/if}}
+                            {{else}}
+                                not viewed
+                            {{/if}}
+                            </span>
+                            <span class="items">
+                                ${$value.last_visit}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
             </li>
             {{/each}}
         </script>
     </head>
     <body>
         <div id="header">
-            <a href="#" id="take_screenshot" class='button'>Take Screenshot</a><span style="padding: 10px;">or</span>
-            <a href="http://min.us" id="upload_new" class='button' target="_blank">Upload file</a>
+            <a href="#" id="take_screenshot" class='button'><img src="images/btn_camera_normal.png" style="vertical-align: bottom; opacity: 0.8; margin-right: 5px;"/> Take Screenshot</a>
         </div>
-        
-        <div id="latest_file">
-            <span>Lastest file:</span><input />
+
+        <div id="timeline">
+            <span>Timeline:</span>
+
+            <a data-timeline='feed'>Feed</a>
+            <a data-timeline='mine'>Mine</a>
+            <a data-timeline='history'>History</a>
         </div>
-        
+
         <div id="galleries_container">
-            <ul id="my_galleries">
-                <span style="margin-left: 10px; color: #666">Loading galleries...</span>
+            <ul id="my_galleries">                
+                <li class="loader"></li>
             </ul>
         </div>
         <div id="footer">
             <img src="images/logo_big.png" height="40px"/>
             <a id="user" target="_blank"></a>
             <a href="http://min.us/pages/galleries" target="_blank" id="galleries_header" class="minus_link"></a>
-            <a id="signout" target="_blank" href="http://min.us/api/login/signout">Sign Out</a>
         </div>    
-
-        <div id="loader" style="display: none"><div></div></div>
 
         <script src="js/jquery.min.js"></script>
         <script src="js/jquery.tmpl.min.js"></script>
@@ -60,7 +89,7 @@
         <script src="js/jquery.jscrollpane.min.js"></script>
         <script src="js/store.js"></script>
 
-        <script src="js/minus.js"></script>
+        <script src="js/minus.js?1"></script>
         <script src="js/browser_api.js"></script>
         <script src="js/popup.js"></script>
     </body>

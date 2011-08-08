@@ -28,7 +28,12 @@
     if (XMLHttpRequest && !XMLHttpRequest.prototype.sendAsBinary) { 
         XMLHttpRequest.prototype.sendAsBinary = function(datastr) {
             if (window.chrome) {
-                var bb = new BlobBuilder();
+                if (window.BlobBuilder) {
+                    var bb = new BlobBuilder();
+                } else {
+                    var bb = new window.WebKitBlobBuilder();
+                }
+
                 var data = new ArrayBuffer(datastr.length);
                 var ui8a = new Uint8Array(data, 0);
                 for (var i=0; i<datastr.length; i++) {
@@ -53,8 +58,6 @@
     }
 
     function Ajax(url, options) { 
-        console.log("Sending request with options:", url, options);
-
         if (options == undefined) {
             options = {};
         }
@@ -132,7 +135,7 @@
 
 
     var Minus = {
-        prefix: 'http://min.us/api/'
+        prefix: 'http://minus.com/api/'
     }        
 
     Minus.callMethod = function(method, options) {        
@@ -141,8 +144,6 @@
         }
 
         var new_options = clone(options);
-
-        console.log("new options:", new_options, options);
 
         new_options.onSuccess = function(resp, xhr){
             console.log("Method '%s' called succesefully", method, options, resp);
@@ -256,7 +257,7 @@
 
                     callback({ error: "file_size_error", message: "Maximum allowed file size is 10 mb." });
                 } else {
-                    if (navigator.userAgent.match('Firefox') !== undefined) {
+                    if (navigator.userAgent.match('Firefox') != undefined) {
                         var bData = getImageFromURL(url);
                         Minus.uploadItem(editor_id, filename, mime, bData, callback);
                     } else {
@@ -285,8 +286,11 @@
         });
     }
        
-    Minus.myGalleries = function(callback) {
-        this.callMethod('MyGalleries.json', {
+    Minus.timeline = function(type, page, callback) {
+        if (!page)
+            page = 1;
+
+        this.callMethod('pane/'+type+'.json/'+page, {
             onSuccess: callback,
             onError: function(resp) {                
                 callback({ error: "api_error", message: "Error while calling API method 'MyGalleries'" });
@@ -295,7 +299,7 @@
     }
 
     Minus.getUsername = function(callback) {
-        new Ajax('http://min.us', {
+        new Ajax('http://minus.com', {
             onSuccess: function(response) {
                 var match = response.match(/\/u\/(.*)\/pref"/);
 

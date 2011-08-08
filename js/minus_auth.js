@@ -2,8 +2,9 @@ browser.addMessageListener(function(){
 
 });
 
-var user = $('#menu_me_link').text().trim();
+var match = document.getElementById('nav_cont').innerHTML.match(/\/u\/(.*)\/pref"/);
+var user = match ? match[1] : "";
 
-browser.onReady(function(){
+browser.onReady(function(){    
     browser.postMessage({ method: "setUsername", username: user })
 });

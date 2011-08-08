@@ -1,0 +1,240 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="css/reset-min.css">
+        <link rel="stylesheet" type="text/css" href="css/chosen.css">
+
+        <style>
+            html, body {
+                background-color: #eee;
+                height: 100%;
+            }
+
+            #avpw_filter_eggs_panel {
+                visibility: hidden;
+            }
+
+            #avpw_save_container {
+                display: none;
+            }
+
+            #panel {
+                height: 40px;
+                width: 100%;
+                background: white;
+                border-bottom: 2px solid #ccc;
+
+                position: fixed;
+                z-index: 999999;
+
+                text-align: center;            
+            }
+
+            #panel a.button {
+                font-family: helvetica, arial, sans-serif;
+                background: #04C url(/smedia/minus/images/alert-overlay.png) repeat-x;                
+                display: inline-block;
+                color: white;
+                text-decoration: none;
+                -moz-border-radius: 5px;
+                -webkit-border-radius: 5px;
+                -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+                -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+                text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.25);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+                position: relative;
+                cursor: pointer;
+                padding: 5px 10px 6px;
+
+                font-size: 13px;
+                font-weight: 700;
+                line-height: 1;
+                text-shadow: 0 -1px 1px rgba(0, 0, 0, 0);
+
+                margin-left: 10px;
+            }
+
+            #panel a.button:hover {
+                background-color: #26F;
+            }
+
+            #panel select {
+                color: #000;
+                font-family: helvetica, arial;
+                width: 250px;
+            }
+
+            #panel .container {
+                display: inline-block; 
+                padding-top: 6px;
+                margin-left: 10px;
+                font-family: Arial;
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body style="overflow-x: hidden; text-align: center;">
+        <div id="panel">
+            <div class="content">
+                <img src="images/logo_big.png" height="40px" width="73px" style="position: absolute; left: 2px;"/>
+                <div class="container">
+                    <select id="gallery_list">
+                        <option value="new">Create new gallery</option>
+                        <option>Loading...</option>
+                    </select>
+                    <a id="upload" class="button">Save and Upload</a>
+                </div>
+            </div>
+        </div>
+        <div style="height: 40px;"></div>
+
+        <img id="image_for_edit" style="max-width: 100%;" />        
+        
+        <script src="js/jquery.min.js"></script>
+        <script src="js/chosen.jquery.min.js"></script>
+        <script src="js/browser_api.js"></script>
+        <script src="js/minus.js?1"></script>
+        
+        <script>
+            $('#gallery_list').chosen();
+
+            function queryParam(name){
+              name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+              var regexS = "[\\?&]"+name+"=([^&#]*)";
+              var regex = new RegExp( regexS );
+              var results = regex.exec( window.location.href );
+              if( results == null )
+                return "";
+              else
+                return results[1];
+            }
+
+            $('#upload').bind('click', function(){
+                $(this).html('Uploading...');
+                $('#panel .content').append("<img src='images/loading.gif' style='vertical-align: middle'/>");
+                
+                var title = decodeURIComponent(queryParam('title'));
+
+                try {
+                    var canvas = $('canvas')[0];
+                    var imageData = canvas.toDataURL();
+                } catch(e) {
+                    var imageData = $('#image_for_edit')[0].src;
+                }
+
+                browser.postMessage({ method: "uploadScreenshot", imageData:canvas.toDataURL(), title:title, gallery:$('#gallery_list').val() });
+            });
+
+
+            var galleries = [];
+            var pages_loaded = 1;
+
+            function loadGalleries(){
+                Minus.timeline('mine', 1, function(response) {
+                    for (var i=1; i<=response.total_pages; i++) {
+                        (function(page){
+                            Minus.timeline('mine', i, function(resp){
+                                $.each(resp.galleries, function(idx, item){
+                                    item.page = page;
+
+                                    galleries.push(item);
+                                })
+
+                                pages_loaded += 1;
+                                
+                                if (pages_loaded == response.total_pages) {
+                                    galleries = galleries.sort(function(a,b){ return (a.page - b.page) });
+
+                                    var options = ["<option value='new'>Create new gallery</option>"];
+
+                                    $.each(galleries, function(idx, item) {
+                                        options.push("<option value='"+item.reader_id+"'>"+(item.name||"Untitled")+"</option>");
+                                    });
+
+                                    $('#gallery_list').html(options.join(""));
+
+                                    $('#gallery_list').trigger("liszt:updated");
+                                }
+                            });
+                        })(i)
+                    }
+                });
+            }
+
+            loadGalleries();
+            
+        </script>
+
+        <script type="text/javascript"> 
+            var bg_page = chrome.extension.getBackgroundPage();
+            document.getElementById('image_for_edit').src = bg_page.latest_screenshot;
+
+            var _featherLoaded = false; 
+             
+            Feather_APIKey = '';
+            Feather_NoCloseButton = true;
+            Feather_Theme = 'bluesky'; 
+            Feather_EditOptions = 'all'; 
+            Feather_OpenType = 'float';
+            Feather_MaxSize = window.outerWidth
+            Feather_CropSizes = '320x240,640x480,800x600,1280x1024'; 
+                  
+            Feather_OnSave = function(id, url) { 
+                var e = document.getElementById(id); 
+                e.src = url; 
+                aviaryeditor_close(); 
+            } 
+             
+            Feather_OnLoad = function() { 
+                _featherLoaded = true; 
+
+                launchEditor('image_for_edit')
+            } 
+
+            Feather_OnLaunchComplete = function(){
+            }
+             
+            function launchEditor(imageid) { 
+                if (_featherLoaded) { 
+                    var img = document.getElementById(imageid); 
+                    aviaryeditor(imageid, "");            
+
+                    var init_aviary = function(){
+                        AV_paintWidget.setBackground(img);
+                        $("#avpw_controls").insertAfter(AV_paintWidget.canvas);
+                        $(AV_paintWidget.canvas).insertBefore("#avpw_temp_loading_image");
+                        $("#avpw_temp_loading_image").remove();
+                        AV_tempLoadingImageSrc = img.src;
+                        AV_controlsWidget.showWaitThrobber(!1), 
+                        $(AV_controlsWidget.onEggWaitThrobber).hide();
+                        AV_controlsWidget.loaderPhase = 2;
+
+                        // if scroll visible move controls to visible part of the page
+                        if (document.body.clientWidth < document.body.scrollWidth) {
+                            var controls = $("#avpw_controls");
+                            controls.css({
+                                'left': (window.outerWidth - controls.width() - 50)+'px',
+                                'top':  (window.innerHeight - controls.height() - 50)+'px' 
+                            });
+                        }
+                    }
+
+                    setTimeout(init_aviary, 1000);
+                } 
+            } 
+        </script> 
+        <script type="text/javascript" src="http://feather.aviary.com/js/feather.js"></script>  
+
+        <script>
+            browser.addMessageListener(function(msg, sender) {
+                if (msg.method == "uploadComplete") {
+                    window.close();
+                }
+            });
+
+            browser.onReady(function(){
+              
+            });
+        </script>
+    </body>
+</html>
