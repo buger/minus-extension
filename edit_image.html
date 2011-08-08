@@ -136,6 +136,7 @@
                             Minus.timeline('mine', i, function(resp){
                                 $.each(resp.galleries, function(idx, item){
                                     item.page = page;
+                                    item.idx = idx;
 
                                     galleries.push(item);
                                 })
@@ -143,7 +144,7 @@
                                 pages_loaded += 1;
                                 
                                 if (pages_loaded == response.total_pages) {
-                                    galleries = galleries.sort(function(a,b){ return (a.page - b.page) });
+                                    galleries = galleries.sort(function(a,b){ return ((a.page*100+a.idx) - (b.page*100+b.idx)) });
 
                                     var options = ["<option value='new'>Create new gallery</option>"];
 
