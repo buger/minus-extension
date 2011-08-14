@@ -115,7 +115,7 @@
     }
 
     browser.addMessageListener(function(msg, sender) {
-        $('#take_screenshot').removeClass('loading');
+        $('#header').removeClass('loading');
 
         if (msg.method == "screenshotComplete") {
             updateTimeline();
@@ -130,11 +130,29 @@
 
 
     $('#take_screenshot').live('click', function(){
-        if (!$(this).hasClass('loading')) {
-            $(this).addClass('loading');
-            browser.postMessage({ method: 'takeScreenshot' });
+        var parent = $(this).parent();
+
+        if (!parent.hasClass('loading')) {
+            parent.addClass('loading');
+            
+            browser.postMessage({ method: 'takeScreenshot', captureType: parent.find('li').data('screenshot-type') });
+            
+            if (parent.find('li').data('screenshot-type') == 'region') {
+                setTimeout(window.close, 100);
+            }
         }
     });
+    
+    $('#header .more li[data-screenshot-type]').live('click', function(){
+        if (!$('#header').hasClass('loading')) {
+            $('#header').addClass('loading');
+            
+            browser.postMessage({ method: 'takeScreenshot', captureType: $(this).data('screenshot-type') });
+
+            if ($(this).data('screenshot-type') == 'region')
+                setTimeout(window.close, 100);
+        }
+    })
 
     function updateUser() {
         var user = window.store.get('username');
@@ -151,6 +169,25 @@
     function updateUI() {
         updateTimeline();
         updateUser();
+
+        browser.tabs.getSelected(null, function(tab) {
+            if (window.store.get('edit_image') == undefined)
+                window.store.set('edit_image', true);
+
+            $('#edit_image').attr('checked', window.store.get('edit_image'))
+
+            $('#edit_image').bind('change', function(){
+                window.store.set('edit_image', this.checked);
+            });
+
+            if (tab.url.match('https://')) {
+                $('#header *[data-screenshot-type=full], #header *[data-screenshot-type=region]').remove();
+            }
+            
+            if (tab.url.match('chrome://newtab') || tab.url.match('chrome://extensions')) {
+                $('#header *[data-screenshot-type]').remove();
+            }
+        });
     }
 
     $(document).ready(function() {    

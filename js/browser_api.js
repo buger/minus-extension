@@ -136,11 +136,7 @@
             },
 
             postMessage: function(tab, message) {               
-                var connection = browser._getConnectionByTab(tab);                
-
-                if (connection) {
-                    browser.postMessage(message, connection);
-                }
+                browser.postMessage(message, tab);
             },
 
             captureVisibleTab: function(windowID, options, callback) {
@@ -153,16 +149,6 @@
                         callback(msg.response);
                     });
                 }
-            },
-
-            _getConnectionByTab: function(tab) {
-                browser._connected_ports.forEach(function(port) {
-                    if (browser.isChrome) {
-                        if (port.tab._tabId === tab._tabId) {
-                            return port;
-                        }
-                    }
-                });
             }
         },     
 
@@ -319,40 +305,7 @@
         },
 
         _c_addMessageListener: function(listener) {
-            if (browser.isBackgroundPage) {
-                chrome.extension.onConnect.addListener(function(port) {
-                    console.log("Port connected:", port.name, port);
-
-                    browser.connected_ports.push(port);
-
-                    port.onMessage.addListener(function(message) {
-                        listener(message, port);
-                    });
-
-                    port.onDisconnect.addListener(function() {
-                        for (var i=0; i<browser.connected_ports.length; i++) {
-                            console.log('Port disconnected', browser.connected_ports[i].portId_, port.portId_);
-
-                            if (browser.connected_ports[i].portId_ == port.portId_) {
-                                browser.connected_ports.splice(i, 1);
-
-                                break;
-                            }
-                        }
-                    });                
-                });
-            } else {
-                if (browser.connected_ports.length == 0) {
-                    var port = chrome.extension.connect();
-                    browser.connected_ports.push(port);
-                } else {
-                    port = browser.connected_ports[0];
-                }
-                
-                port.onMessage.addListener(function(message){
-                    listener(message, port);
-                });
-            }
+            chrome.extension.onRequest.addListener(listener);
             
             browser.onReady();
         },
@@ -611,21 +564,40 @@
 
                 console.log("Posting message ", message, " to ", dest);
             
-                browser.isSafari ? dest.dispatchMessage("_method", message) : dest.postMessage(message);            
+                if (browser.isSafari) {
+                    dest.dispatchMessage("_method", message) 
+                } else {
+                    if (browser.isBackgroundPage) {
+                        chrome.tabs.sendRequest(dest.id, message);
+                    } else {
+                        chrome.extension.sendRequest(message);
+                    }
+                }
             } else {
                 browser.broadcastMessage(message, callback);
             }
         },
 
         broadcastMessage: function(message, callback) {
+            if (!callback) callback = function(){};
+
             message.__id = new Date().getTime();
 
             if (browser.isChrome) {
-                var length = browser.connected_ports.length;
-
-                for(var i=0; i<length; i++) {
-                    browser.connected_ports[i].postMessage(message);
+                if (browser.isBackgroundPage) {
+                    chrome.windows.getAll(null, function(wins) {
+                        for (var j = 0; j < wins.length; ++j) {
+                            chrome.tabs.getAllInWindow(wins[j].id, function(tabs) {
+                                for (var i = 0; i < tabs.length; ++i) {
+                                    chrome.tabs.sendRequest(tabs[i].id, message);
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    chrome.extension.sendRequest(message, callback);
                 }
+
             } else if (browser.isOpera) {
                 if (browser.isBackgroundPage) {
                     opera.extension.broadcastMessage(message);

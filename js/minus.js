@@ -118,6 +118,15 @@
         }
         
         if (options.mime_type) xhr.overrideMimeType(options.mime_type);        
+
+        if (options.onProgress) {
+            upload = xhr.upload;
+            upload.addEventListener("progress", function (ev) {
+                if (ev.lengthComputable) {
+                    options.onProgress((ev.loaded / ev.total) * 100);
+                }
+            }, false);
+        }
         
         // Sending data
         if (options.method === "POST" && (options.params || options.binaryData)) {
@@ -186,7 +195,7 @@
     }
 
     
-    Minus.uploadItem = function(editor_id, filename, mime, binaryData, callback) {
+    Minus.uploadItem = function(editor_id, filename, mime, binaryData, callback, onProgress) {
         filename = encodeURIComponent(filename.replace(/^\./,''));        
 
         var params = hashToQueryString({ editor_id: editor_id, key: "OK", filename:filename });
@@ -211,7 +220,9 @@
             onSuccess: callback,
             onError: function(resp) {
                 callback({ error: "api_error", message: "Error while calling API method 'UploadItem'" });
-            }
+            },
+
+            onProgress: onProgress
         });
     }
     
@@ -239,7 +250,7 @@
       return file_data; 
     }
 
-    Minus.uploadItemFromURL = function(url, editor_id, callback) {
+    Minus.uploadItemFromURL = function(url, editor_id, callback, progress) {
         if (!callback)
             callback = emptyFunc;
 
@@ -264,7 +275,7 @@
                         var data = new Ajax(url, {
                             mime_type: 'text/plain; charset=x-user-defined',
                             onSuccess: function() {
-                                Minus.uploadItem(editor_id, filename, mime, data.responseText, callback);
+                                Minus.uploadItem(editor_id, filename, mime, data.responseText, callback, progress);
                             }
                         });
                     }

@@ -16,8 +16,11 @@
                         <td class="header">
                             <a class='name' target='_blank' href='http://minus.com/m${$value.reader_id}'>${$value.name||'Untitled'}</a>
                         </td>
-                        <td class="action" rowspan="3" valign="center" align="right">
-                            <a><img src="images/more_content.png" width="25px" /></a>
+                        <td class="action" rowspan="3" valign="top" align="right">
+                            {{if $value.is_public}}
+                            <img src="images/ic_public.png" width="20px" height="20px" title="Public gallery" />
+                            {{/if}}
+                            <a style="display: none"><img src="images/more_content.png" width="25px" /></a>
                         </td>
                     </tr>
                     <tr>
@@ -62,6 +65,22 @@
     <body>
         <div id="header">
             <a href="#" id="take_screenshot" class='button'><img src="images/btn_camera_normal.png" style="vertical-align: bottom; opacity: 0.8; margin-right: 5px;"/> Take Screenshot</a>
+
+            <a class="more">
+                <span>▾</span>
+                <div>
+                    <ul>
+                        <li data-screenshot-type="visible">Visible Part of Page <span>Ctrl+Alt+V</span></li>
+                        <li data-screenshot-type="region">Selected Area <span>Ctrl+Alt+R</span></li>
+                        <li data-screenshot-type="full">Entire page <span>Ctrl+Alt+H</span></li>
+
+                        <li class="edit_image_config">
+                            <input type="checkbox" id="edit_image"/>
+                            <label for="edit_image">Edit image before uploading</label>
+                        </li>
+                    </ul>
+                </div>
+            </a>
         </div>
 
         <div id="timeline">
@@ -78,7 +97,7 @@
             </ul>
         </div>
         <div id="footer">
-            <img src="images/logo_big.png" height="40px"/>
+            <a href="http://minus.com" target="_blank"><img src="images/logo_big.png" width="60px"/></a>
             <a id="user" target="_blank"></a>
             <a href="http://min.us/pages/galleries" target="_blank" id="galleries_header" class="minus_link"></a>
         </div>    

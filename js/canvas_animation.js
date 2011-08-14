@@ -42,6 +42,8 @@ var Animation = function(image, canvas, frames){
     
     stop: function(){
       clearInterval(self.timer);
+      
+      browser.toolbarItem.setIcon({ path: "images/logo_small.png" });
 
       frame = 0;
       draw();

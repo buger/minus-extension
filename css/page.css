@@ -1,22 +1,109 @@
-.minus_ext_droppable {
-    padding:0;
-    margin:0;
-
+#minus_drag_area {
     position: absolute;
-    background: rgba(0,0,0, 0.1) url(http://min.us/smedia/minus/images/home_page_v3.png) top left no-repeat;
-    width: 500px;
-    height: 50px;
-
-    top: 10px;
-    left: 10px;
-
-    z-index: 99999;
-
-    color: #575757;
-    font-size: 16px;
-    font-family: helvetica, arial, sans-serif;
-
-    padding-top: 250px; 
-
-    text-align: center;
+    z-index: 99999999;
+    top: 0px;
+    left: 0px;
 }
+
+#minus_drag_area .area {
+    position: absolute;
+
+    top: 100px;
+    left: 100px;
+    height: 300px;
+    width: 300px;
+
+    border: 1px dashed red;
+
+    cursor: move;
+
+    min-width: 30px;
+    min-height: 30px;
+}
+
+#minus_drag_area .shadow {
+    position: absolute;
+
+    background-color: #333;
+    opacity: 0.5;
+}
+
+#minus_drag_area .shadow.top {
+    top: 0px;
+    left: 0px;
+}
+
+#minus_drag_area .shadow.left { left: 0px; }
+
+#minus_drag_area .shadow.top { top: 0px; }
+
+#minus_drag_area .drag {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border: 2px solid red;
+    border-radius: 5px;
+    background: white;
+}
+
+#minus_drag_area .drag.tl { top: -6px; left: -6px; cursor: nw-resize; }
+#minus_drag_area .drag.tr { top: -6px; right: -6px; cursor: ne-resize; }
+#minus_drag_area .drag.bl { bottom: -6px; left: -6px; cursor: sw-resize; }
+#minus_drag_area .drag.br { bottom: -3px; right: -6px; cursor: se-resize; }
+
+#minus_drag_area .drag.t { top: -6px; cursor: n-resize; }
+#minus_drag_area .drag.r { right: -6px; cursor: e-resize; }
+#minus_drag_area .drag.l { left: -6px; cursor: w-resize; }
+#minus_drag_area .drag.b { bottom: -6px; cursor: s-resize; }
+
+
+#minus_drag_area .size {
+    position: absolute;
+    top: -30px;
+    left: -2px;
+
+    height: 16px;
+    min-width: 60px;
+    border: 1px solid #333;
+    background: #333;
+    padding: 2px 4px;
+
+    opacity: 0.9;
+
+    color: white;
+    font-size: 13px;
+    font-family: Arial;                
+
+    border-radius: 3px;
+}
+
+#minus_drag_area .cancel, #minus_drag_area .ok {
+    position: absolute;
+    bottom: -25px;
+    padding: 3px 6px;
+
+    border: 3px;
+    border: 1px solid #ccc;
+
+    font-size: 14px;
+    font-family: Arial;
+    
+    background: #000;
+    color: white;
+    opacity: 0.8;
+
+    cursor: pointer;
+}
+
+#minus_drag_area .cancel:hover, #minus_drag_area .ok:hover {
+    opacity: 1;
+}
+
+#minus_drag_area .cancel {
+    right: 80px;
+}
+
+#minus_drag_area .ok {
+    right: 0px;
+}
+

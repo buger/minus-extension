@@ -2,6 +2,7 @@
 <html>
     <head>
         <link rel="stylesheet" type="text/css" href="css/reset-min.css">
+        <link rel="stylesheet" type="text/css" href="css/reset-context-min.css">
         <link rel="stylesheet" type="text/css" href="css/chosen.css">
 
         <style>
@@ -30,7 +31,7 @@
                 text-align: center;            
             }
 
-            #panel a.button {
+            a.minus_button {
                 font-family: helvetica, arial, sans-serif;
                 background: #04C url(/smedia/minus/images/alert-overlay.png) repeat-x;                
                 display: inline-block;
@@ -54,7 +55,7 @@
                 margin-left: 10px;
             }
 
-            #panel a.button:hover {
+            a.minus_button:hover {
                 background-color: #26F;
             }
 
@@ -71,24 +72,133 @@
                 font-family: Arial;
                 text-align: left;
             }
+
+            #minus_drag_area {
+                position: absolute;
+                z-index: 99999999;
+                top: 0px;
+                left: 0px;
+            }
+
+            #minus_drag_area .area {
+                position: absolute;
+
+                top: 100px;
+                left: 100px;
+                height: 300px;
+                width: 300px;
+
+                border: 1px dashed red;
+
+                cursor: move;
+
+                min-width: 30px;
+                min-height: 30px;
+            }
+        
+            #minus_drag_area .shadow {
+                position: absolute;
+
+                background-color: #333;
+                opacity: 0.5;
+            }
+            
+            #minus_drag_area .shadow.top {
+                top: 0px;
+                left: 0px;
+            }
+            
+            #minus_drag_area .shadow.left { left: 0px; }
+            
+            #minus_drag_area .shadow.top { top: 0px; }
+
+            #minus_drag_area .drag {
+                position: absolute;
+                width: 5px;
+                height: 5px;
+                border: 2px solid red;
+                border-radius: 5px;
+                background: white;
+            }
+
+            #minus_drag_area .drag.tl { top: -6px; left: -6px; cursor: nw-resize; }
+            #minus_drag_area .drag.tr { top: -6px; right: -6px; cursor: ne-resize; }
+            #minus_drag_area .drag.bl { bottom: -6px; left: -6px; cursor: sw-resize; }
+            #minus_drag_area .drag.br { bottom: -3px; right: -6px; cursor: se-resize; }
+
+            #minus_drag_area .drag.t { top: -6px; cursor: n-resize; }
+            #minus_drag_area .drag.r { right: -6px; cursor: e-resize; }
+            #minus_drag_area .drag.l { left: -6px; cursor: w-resize; }
+            #minus_drag_area .drag.b { bottom: -6px; cursor: s-resize; }
+
+
+            #minus_drag_area .size {
+                position: absolute;
+                top: -30px;
+                left: -2px;
+
+                height: 16px;
+                min-width: 60px;
+                border: 1px solid #333;
+                background: #333;
+                padding: 2px 4px;
+
+                opacity: 0.9;
+
+                color: white;
+                font-size: 13px;
+                font-family: Arial;                
+
+                border-radius: 3px;
+            }
+
+            #minus_drag_area .cancel, #minus_drag_area .ok {
+                position: absolute;
+                bottom: -25px;
+                padding: 3px 6px;
+
+                border: 3px;
+                border: 1px solid #ccc;
+
+                font-size: 14px;
+                font-family: Arial;
+                
+                background: #000;
+                color: white;
+                opacity: 0.8;
+
+                cursor: pointer;
+            }
+            
+            #minus_drag_area .cancel:hover, #minus_drag_area .ok:hover {
+                opacity: 1;
+            }
+            
+            #minus_drag_area .cancel {
+                right: 80px;
+            }
+            
+            #minus_drag_area .ok {
+                right: 0px;
+            }
         </style>
     </head>
     <body style="overflow-x: hidden; text-align: center;">
         <div id="panel">
             <div class="content">
-                <img src="images/logo_big.png" height="40px" width="73px" style="position: absolute; left: 2px;"/>
+                <a href="http://minus.com" target="_blank"><img src="images/logo_big.png" height="" width="80px" style="position: absolute; left: 10px; top: 8px;"/></a>
                 <div class="container">
                     <select id="gallery_list">
                         <option value="new">Create new gallery</option>
                         <option>Loading...</option>
                     </select>
-                    <a id="upload" class="button">Save and Upload</a>
+                    <a id="upload" class="minus_button">Save and Upload</a>
                 </div>
             </div>
         </div>
         <div style="height: 40px;"></div>
 
-        <img id="image_for_edit" style="max-width: 100%;" />        
+        <img id="image_for_edit" style="max-width: 100%;" />
         
         <script src="js/jquery.min.js"></script>
         <script src="js/chosen.jquery.min.js"></script>
@@ -110,10 +220,13 @@
             }
 
             $('#upload').bind('click', function(){
-                $(this).html('Uploading...');
-                $('#panel .content').append("<img src='images/loading.gif' style='vertical-align: middle'/>");
+                $(this).html('0% uploaded');
                 
-                var title = decodeURIComponent(queryParam('title'));
+                try {
+                    var title = decodeURIComponent(queryParam('title'));
+                } catch(e) {
+                    var title = queryParam('title');
+                }
 
                 try {
                     var canvas = $('canvas')[0];
@@ -166,18 +279,22 @@
             
         </script>
 
-        <script type="text/javascript"> 
+        <script type="text/javascript">            
             var bg_page = chrome.extension.getBackgroundPage();
-            document.getElementById('image_for_edit').src = bg_page.latest_screenshot;
+            
+            document.getElementById('image_for_edit').src = bg_page.latest_screenshot
+
 
             var _featherLoaded = false; 
              
             Feather_APIKey = '';
             Feather_NoCloseButton = true;
-            Feather_Theme = 'bluesky'; 
+            Feather_Theme = 'silver'; 
             Feather_EditOptions = 'all'; 
             Feather_OpenType = 'float';
-            Feather_MaxSize = window.outerWidth
+            Feather_MaxSize = window.outerWidth;
+            Feather_MaxDisplaySize = 10000;
+            Feather_MaxSize = 10000;
             Feather_CropSizes = '320x240,640x480,800x600,1280x1024'; 
                   
             Feather_OnSave = function(id, url) { 
@@ -218,6 +335,10 @@
                                 'top':  (window.innerHeight - controls.height() - 50)+'px' 
                             });
                         }
+
+                        $('#avpw_header a')
+                            .attr('href', "http://www.aviary.com/html5")
+                            .attr('target', "_blank");
                     }
 
                     setTimeout(init_aviary, 1000);
@@ -230,6 +351,9 @@
             browser.addMessageListener(function(msg, sender) {
                 if (msg.method == "uploadComplete") {
                     window.close();
+                } else if (msg.method == "uploadProgress") {
+                    console.log(msg);
+                    $('#upload').html(parseInt(msg.progress)+"% uploaded");
                 }
             });
 

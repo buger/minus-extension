@@ -47,12 +47,17 @@
 
     var anim = new Animation(document.getElementById('img'), document.getElementById('canvas'), 11);
 
-    browser.popupHeight = 400
-    browser.popupWidth = 400
+    browser.popupHeight = 400;
+    browser.popupWidth = 400;
 
     function createGalleryClick(data) {
-        window.latest_screenshot = data.srcUrl;        
-        browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+data.srcUrl) });
+        // Gif file editing is forbided
+        if (store.get('edit_image') && !data.srcUrl.match("\.gif")) {
+            window.latest_screenshot = data.srcUrl;        
+            browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+data.srcUrl) });
+        } else {
+            uploadScreenshot(data.srcUrl, 'new', data.srcUrl);
+        }
     }
 
     function initContextMenu() { 
@@ -79,50 +84,246 @@
         }
     }
 
-    function uploadItem(binaryData, gallery_id, title){
+    function uploadItem(binaryData, gallery_id, title, onProgress){
         anim.start();
 
         Minus.uploadItem(gallery_id, title.slice(0,50)+".png", "image/png", binaryData, 
             function(resp){
                 anim.stop();
 
+                browser.toolbarItem.setText('');
+                
+                console.log('resp');
+
                 if (!resp.error)
                     browser.tabs.create({ url: "http://minus.com/m"+gallery_id });
                 
                 browser.postMessage({ method: "uploadComplete" });
-            }
+            },
+
+            onProgress
         );
     }
 
+    function uploadScreenshot(base64Data, gallery_id, title) {
+        var onProgress = function(progress) {
+            var percent = parseInt(progress)+'%';
+            browser.toolbarItem.setText(percent);
+
+            browser.postMessage({ method:"uploadProgress", progress: progress });
+        }
+
+        function upload() {
+            var binaryData = atob(base64Data.replace(/^data\:image\/png\;base64\,/,''));
+            
+            if (gallery_id == 'new') {
+                Minus.createGallery(function(gallery) {
+                    uploadItem(binaryData, gallery.editor_id, title, onProgress);
+                });
+            } else {
+                uploadItem(binaryData, gallery_id, title, onProgress);
+            }
+        }
+
+        if (base64Data.slice(0,4) == 'data') {
+            upload();
+        } else {
+            anim.start();
+
+            Minus.createGallery(function(gallery) {
+                Minus.uploadItemFromURL(base64Data, gallery.editor_id, function(resp){
+                    anim.stop();
+
+                    browser.toolbarItem.setText('');
+                    
+                    if (!resp.error)
+                        browser.tabs.create({ url: "http://minus.com/m"+gallery.reader_id });
+                    
+                    browser.postMessage({ method: "uploadComplete" });
+                }, onProgress);
+            });
+        }
+    }
+
+    function captureVisible(callback) {
+        browser.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
+            callback(dataUrl);
+        });
+    }
+
+    function concatImages(image_data_array, callback) {
+        if (!$.isArray(image_data_array))
+            return false;
+
+        var images = [], 
+            image, 
+            loaded_images = 0, 
+            total_height = 0, 
+            total_width = 0,
+            concated_height = 0;
+
+        var canvas = $('<canvas/>').appendTo(document.body);
+
+        var imageLoaded = function() {
+            total_width = this.naturalWidth;
+            total_height = total_height + this.naturalHeight;
+
+            loaded_images += 1;
+
+            // All images loaded
+            if (loaded_images == image_data_array.length) {
+                canvas[0].width = total_width;
+                canvas[0].height = total_height;
+                ctx = canvas[0].getContext('2d');                
+
+                for (var i=0; i<images.length; i++) {
+                    ctx.drawImage(images[i], 0, concated_height);
+
+                    concated_height += images[i].naturalHeight;
+                }
+
+                callback(canvas[0].toDataURL());
+
+                canvas.remove();
+                $(this).remove();
+            }
+        };
+
+        for (var i=0; i<image_data_array.length; i++) {
+            image = new Image;
+            image.src = image_data_array[i];
+            image.onload = imageLoaded; 
+
+            images.push(image);
+        }
+    }
+
+    function cropHeight(heightFix, imageData, callback) {
+        if (!heightFix)
+            return callback(imageData);
+
+        var canvas = $('<canvas />').appendTo(document.body);
+        ctx = canvas[0].getContext('2d');
+
+        var image = new Image;
+        image.src = imageData;
+        image.onload = function(){
+            canvas[0].width = image.naturalWidth;
+            canvas[0].height = image.naturalHeight - heightFix;
+
+            ctx.drawImage(image, 0, -heightFix);
+            callback(canvas[0].toDataURL());
+
+            canvas.remove();
+        }
+    }
+
+    function cropImage(bounds, imageData, callback) {
+        var canvas = $('<canvas />').appendTo(document.body);
+        ctx = canvas[0].getContext('2d');
+
+        var image = new Image;
+        image.src = imageData;
+        image.onload = function(){
+            canvas[0].width = bounds.width;
+            canvas[0].height = bounds.height;
+
+            console.log(bounds);
+
+            ctx.drawImage(image, bounds.left, bounds.top, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
+            callback(canvas[0].toDataURL());
+
+            canvas.remove()
+        }
+    }
+
     browser.addMessageListener(function(msg, sender){
+        console.log('Received message', msg);
+
         switch (msg.method) {
             case 'takeScreenshot':
                 anim.start();
                 
                 browser.tabs.getSelected(null, function(tab) {
-                    browser.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
-                        removeVScrollbar(dataUrl, function(imageData){
-                            window.latest_screenshot = imageData;
+                    switch (msg.captureType) {
+                        case 'visible':
+                            captureVisible(function(dataUrl){
+                                removeVScrollbar(dataUrl, function(imageData){
+                                    window.latest_screenshot = imageData;
+                                    
+                                    console.log(store.get('edit_image'));
+
+                                    if (store.get('edit_image')) {
+                                        anim.stop();
+
+                                        browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+encodeURIComponent(tab.title)) });
+                                        browser.postMessage({ method: "screenshotComplete" });
+                                    } else {
+                                        uploadScreenshot(imageData, 'new', tab.title)
+                                    }
+                                });
+                            });
+
+                            break;
+                        case 'full':
+                            window.latest_screenshot = [];
+                            browser.postMessage({ method: "scroll", initial: true }, tab);                            
+                            break;
+
+                        case 'scroll':
+                            captureVisible(function(imageData){
+                                if (msg.finished) {
+                                    concatImages(window.latest_screenshot, function(image){
+                                        removeVScrollbar(image, function(imageData){
+                                            window.latest_screenshot = imageData;
+                                            
+                                            if (store.get('edit_image')) {
+                                                anim.stop();
+                            
+                                                browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+tab.title) });
+                                                browser.postMessage({ method: "screenshotComplete" });                                  
+                                            } else {
+                                                uploadScreenshot(imageData, 'new', tab.title)
+                                            }
+                                        });
+                                    });
+                                } else {                        
+                                    cropHeight(msg.heightFix, imageData, function(image){ 
+                                        window.latest_screenshot.push(image);
+
+                                        browser.postMessage({ method: "scroll" }, tab);
+                                    });
+                                }
+                            }); 
+                            break;
+
+                        case 'region':
                             anim.stop();
 
-                            browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+tab.title) });
-                            
-                            browser.postMessage({ method: "screenshotComplete" });
-                        });
-                    });
+                            if (msg.finished) {
+                                captureVisible(function(imageData) {     
+                                    cropImage(msg.bounds, imageData, function(image){
+                                        window.latest_screenshot = image;
+                                        
+                                        if (store.get('edit_image')) {
+                                            browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+tab.title) });
+                                            browser.postMessage({ method: "screenshotComplete" });
+                                        } else {
+                                            uploadScreenshot(image, 'new', tab.title)
+                                        }
+                                    });
+                                });
+                            } else {
+                                browser.postMessage({ method: 'region' }, tab); 
+                            }
+                            break;
+                    }
                 });
                 break;
 
             case 'uploadScreenshot':
-                var binaryData = atob(msg.imageData.replace(/^data\:image\/png\;base64\,/,''));
-                
-                if (msg.gallery == 'new') {
-                    Minus.createGallery(function(gallery) {
-                        uploadItem(binaryData, gallery.editor_id, msg.title);
-                    });
-                } else {
-                    uploadItem(binaryData, msg.gallery, msg.title);
-                }
+                uploadScreenshot(msg.imageData, msg.gallery, msg.title); 
+
                 break;
 
             case 'setUsername':
@@ -134,8 +335,21 @@
         }
     });
 
+    function executeInExistingTabs(){
+        chrome.windows.getAll(null, function(wins) {
+            for (var j = 0; j < wins.length; ++j) {
+                chrome.tabs.getAllInWindow(wins[j].id, function(tabs) {
+                    for (var i = 0; i < tabs.length; ++i) {
+                        chrome.tabs.executeScript(tabs[i].id, { file: 'js/content_script.js' }); 
+                    }
+                });
+            }
+        });
+    }
+
     browser.onReady(function(){
         initContextMenu();
+        executeInExistingTabs();
     });
 
     Minus.getUsername(function(resp) {
