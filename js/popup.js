@@ -41,6 +41,8 @@
         updateGalleries();
     }
 
+    var ICON_ARCHIVE = "http://minus.com/smedia/minus/images/file_icons/generic_archive.png";
+
     function updateGalleries() {
         Minus.timeline(timeline_type, current_page, function(resp) {
             total_pages = resp.total_pages;
@@ -63,11 +65,16 @@
                 var img = this;
 
                 var img_preloader = new Image;
-                img_preloader.src = $(img).data('image');
+                var image = $(img).data('image');                                        
+                
+                if (!image)
+                    return img_preloader.src = ICON_ARCHIVE;                
+
+                img_preloader.src = "http://k.min.us/k" + $(img).data('image');
                     
                 img_preloader.onload = function(){
                     if (img_preloader.naturalHeight == 0) {                            
-                        img.src = "http://minus.com/smedia/minus/images/file_icons/generic_archive.png";
+                        img.src = ICON_ARCHIVE;
                     } else {                        
                         img.src = img_preloader.src; 
                     }
@@ -76,7 +83,7 @@
                 }
 
                 img_preloader.onerror = function(){
-                    img.src = "http://minus.com/smedia/minus/images/file_icons/generic_archive.png";
+                    img.src = ICON_ARCHIVE;
 
                     imageLoaded();
                 }
@@ -133,12 +140,16 @@
         var parent = $(this).parent();
 
         if (!parent.hasClass('loading')) {
-            parent.addClass('loading');
+            var screenshot_type = parent.find('li').data('screenshot-type');
+
+            if (screenshot_type) {
+                parent.addClass('loading');
             
-            browser.postMessage({ method: 'takeScreenshot', captureType: parent.find('li').data('screenshot-type') });
+                browser.postMessage({ method: 'takeScreenshot', captureType: screenshot_type });
             
-            if (parent.find('li').data('screenshot-type') == 'region') {
-                setTimeout(window.close, 100);
+                if (screenshot_type == 'region') {
+                    setTimeout(window.close, 100);
+                }
             }
         }
     });
@@ -152,7 +163,23 @@
             if ($(this).data('screenshot-type') == 'region')
                 setTimeout(window.close, 100);
         }
-    })
+    });
+
+    $('#header .more').hover( 
+        function(){
+            clearInterval(this.timer);
+            $(this).addClass('hover')
+                .find('div').show();   
+        },
+        function(){
+            var self = $(this);
+
+            this.timer = setTimeout(function(){
+                self.removeClass('hover')
+                    .find('div').hide();
+            }, 500);
+        }
+    );
 
     function updateUser() {
         var user = window.store.get('username');
@@ -175,17 +202,27 @@
                 window.store.set('edit_image', true);
 
             $('#edit_image').attr('checked', window.store.get('edit_image'))
-
+            
             $('#edit_image').bind('change', function(){
                 window.store.set('edit_image', this.checked);
             });
 
-            if (tab.url.match('https://')) {
+            $('#header *[data-screenshot-type]').each(function(){
+                var hotkey = store.get('hotkey_'+$(this).data('screenshot-type'));
+
+                if (hotkey) hotkey = (browser.isPlatform('mac') ? 'Cmd' : 'Ctrl') + "+Alt+" + hotkey;
+                
+                $(this).find('span').html(hotkey);
+            });
+
+            if (tab.url.match('https://') || tab.url.match('chrome://') || tab.url.match("file://")) {
                 $('#header *[data-screenshot-type=full], #header *[data-screenshot-type=region]').remove();
             }
             
             if (tab.url.match('chrome://newtab') || tab.url.match('chrome://extensions')) {
                 $('#header *[data-screenshot-type]').remove();
+                $('#take_screenshot').html('Not available for this page')
+                    .parent().find('.more').hide();
             }
         });
     }

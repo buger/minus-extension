@@ -60,6 +60,10 @@
         }
     }
 
+    function captureFromMenu(captureType) {
+        listener({ method: 'takeScreenshot', captureType: captureType });
+    }
+
     function initContextMenu() { 
         if (browser.isChrome || browser.isFirefox) {
             browser.contextMenus.create({
@@ -67,6 +71,25 @@
                 "onclick" : createGalleryClick, 
                 "contexts":["image"]
             });
+
+            browser.contextMenus.create({
+                "title": "Capture Visible Part of Page", 
+                "onclick" : function(){ captureFromMenu('visible') }
+            });
+
+            browser.contextMenus.create({
+                "title": "Capture Selected Area", 
+                "onclick" : function(){ captureFromMenu('region') },
+                "documentUrlPatterns": ["http://*/*"]
+            });
+            
+            browser.contextMenus.create({
+                "title": "Capture Entire Page", 
+                "onclick" : function(){ captureFromMenu('full') },
+                "documentUrlPatterns": ["http://*/*"]
+            });
+
+
         } else if(browser.isSafari) {
             function handleContextMenu(event) {    
                 if (event.userInfo.nodeName === "IMG") {
@@ -107,6 +130,8 @@
 
     function uploadScreenshot(base64Data, gallery_id, title) {
         var onProgress = function(progress) {
+            console.log('updating progress');
+
             var percent = parseInt(progress)+'%';
             browser.toolbarItem.setText(percent);
 
@@ -118,7 +143,7 @@
             
             if (gallery_id == 'new') {
                 Minus.createGallery(function(gallery) {
-                    uploadItem(binaryData, gallery.editor_id, title, onProgress);
+                    uploadItem(binaryData, gallery.reader_id, title, onProgress);
                 });
             } else {
                 uploadItem(binaryData, gallery_id, title, onProgress);
@@ -131,7 +156,7 @@
             anim.start();
 
             Minus.createGallery(function(gallery) {
-                Minus.uploadItemFromURL(base64Data, gallery.editor_id, function(resp){
+                Minus.uploadItemFromURL(base64Data, gallery.reader_id, function(resp){
                     anim.stop();
 
                     browser.toolbarItem.setText('');
@@ -228,8 +253,6 @@
             canvas[0].width = bounds.width;
             canvas[0].height = bounds.height;
 
-            console.log(bounds);
-
             ctx.drawImage(image, bounds.left, bounds.top, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
             callback(canvas[0].toDataURL());
 
@@ -237,12 +260,29 @@
         }
     }
 
-    browser.addMessageListener(function(msg, sender){
+    function updateSettings() {
+        if (store.get('icon_type') == 'bw') {
+            browser.toolbarItem.setIcon({ path: "images/logo_small_bw.png" });
+        } else {
+            browser.toolbarItem.setIcon({ path: "images/logo_small.png" });
+        }
+
+        var settings = {};
+        settings[store.get('hotkey_visible')||'V'] = 'visible';
+        settings[store.get('hotkey_region')||'P'] = 'region';        
+        settings[store.get('hotkey_full')||'H'] = 'full';        
+    
+        browser.postMessage({ method: 'updateSettings', settings: settings });
+    }
+
+    var listener = function(msg, sender) {
         console.log('Received message', msg);
 
         switch (msg.method) {
-            case 'takeScreenshot':
+            case 'takeScreenshot':                                    
                 anim.start();
+
+                console.log("ASDASD");
                 
                 browser.tabs.getSelected(null, function(tab) {
                     switch (msg.captureType) {
@@ -251,13 +291,11 @@
                                 removeVScrollbar(dataUrl, function(imageData){
                                     window.latest_screenshot = imageData;
                                     
-                                    console.log(store.get('edit_image'));
-
                                     if (store.get('edit_image')) {
                                         anim.stop();
 
-                                        browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+encodeURIComponent(tab.title)) });
                                         browser.postMessage({ method: "screenshotComplete" });
+                                        browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+encodeURIComponent(tab.title)) });
                                     } else {
                                         uploadScreenshot(imageData, 'new', tab.title)
                                     }
@@ -332,15 +370,32 @@
                 browser.postMessage({ method: 'setUsername', username: msg.username });
 
                 break;
+
+            case 'updateSettings':
+                updateSettings();
+
+                break;
         }
-    });
+    }
+
+    browser.addMessageListener(listener);
 
     function executeInExistingTabs(){
         chrome.windows.getAll(null, function(wins) {
             for (var j = 0; j < wins.length; ++j) {
                 chrome.tabs.getAllInWindow(wins[j].id, function(tabs) {
                     for (var i = 0; i < tabs.length; ++i) {
+                        if (tabs[i].url.match('chrome://') || tabs[i].url.match('chrome-devtools://'))
+                            continue;
+
+                        try {                           
+                        chrome.tabs.executeScript(tabs[i].id, { file: 'js/jquery.min.js' }); 
+                        chrome.tabs.executeScript(tabs[i].id, { file: 'js/browser_api.js' }); 
                         chrome.tabs.executeScript(tabs[i].id, { file: 'js/content_script.js' }); 
+                        
+                        chrome.tabs.insertCSS(tabs[i].id, { file: 'css/reset-context-min.css' }); 
+                        chrome.tabs.insertCSS(tabs[i].id, { file: 'css/page.css' }); 
+                        } catch(e) {}
                     }
                 });
             }
@@ -350,6 +405,7 @@
     browser.onReady(function(){
         initContextMenu();
         executeInExistingTabs();
+        updateSettings();
     });
 
     Minus.getUsername(function(resp) {

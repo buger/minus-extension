@@ -1,4 +1,9 @@
 ﻿(function(window){
+    if (window.browser && window.browser.isChrome) {
+        window.browser.removeListeners();
+        delete window.browser;
+    }
+
     function joinArgs(args) {
         var result = [], length = args.length, i;
 
@@ -71,6 +76,11 @@
         isOpera:  typeof(window.opera) === "object",
         isSafari: typeof(window.safari) === "object",
         isFirefox: navigator.userAgent.match('Firefox') != undefined,
+
+        isPlatform: function(operationSystem){
+            return navigator.userAgent.toLowerCase().indexOf(operationSystem) > -1;
+        },
+
 
         _o_toolbarButton: null,
 
@@ -303,17 +313,33 @@
                 browser._f_addMessageListener(listener);
             }
         },
+        
+        // TODO
+        removeListeners: function(){
+            if (browser.isChrome) {
+                browser._c_removeMessageListeners();
+            } else if (browser.isOpera) {
+            } else if (browser.isSafari) {
+            } else if (browser.isFirefox) {
+            }                         
+        },
+
+        //Call stack for Opera, Chrome and Safari 
+        _listeners: [],
 
         _c_addMessageListener: function(listener) {
             chrome.extension.onRequest.addListener(listener);
             
             browser.onReady();
         },
-        
 
-        //Call stack for Opera and Safari
-        _listeners: [],
-        
+        _c_removeMessageListeners: function() {
+            console.log("Removing listeners:", this._listeners.length);
+            for (var i=0; i<this._listener.length; i++) {
+                chrome.extension.onRequest.removeListener(this._listeners[i]);
+            }
+        },
+
         _listener_initialized: false,
         
         _f_message_in: null,

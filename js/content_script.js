@@ -269,6 +269,26 @@ function scrollPage() {
     }
 }
 
+var settings = {};
+
+$(document).bind('keydown', function (event) {
+    var isMac = browser.isPlatform('mac');
+    var keyCode = event.keyCode;
+    
+    // Send compose key like Ctrl + Alt + alphabetical-key to background.
+    if ((event.ctrlKey && event.altKey && !isMac ||
+          event.metaKey && event.altKey && isMac) &&
+        keyCode > 64 && keyCode < 91) 
+    {
+        var charcode = String.fromCharCode(keyCode).toUpperCase(); 
+        
+        if (settings[charcode]) {
+            browser.postMessage({ method: 'takeScreenshot', captureType: settings[charcode] });
+        }
+     }
+});
+
+
 browser.addMessageListener(function(msg) {
     console.log('received message', msg);
 
@@ -284,11 +304,19 @@ browser.addMessageListener(function(msg) {
         case "region":
             initializeDrag();
 
+            break;       
+
+        case "updateSettings":
+            settings = msg.settings;
             break;
 
         default:
             break;
     }
+});
+
+browser.onReady(function(){
+    browser.postMessage({ method: "updateSettings" });
 });
 
 }
