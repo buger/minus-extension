@@ -62,16 +62,42 @@ function initializeDrag(){
     var draggable = container.find('.area');
     draggable.css({ left: (document.width/2 - 150), top: (document.body.scrollTop+200) });
 
+    var shadow_top = container.find('.shadow.top')[0],
+        shadow_left = container.find('.shadow.left')[0],
+        shadow_right = container.find('.shadow.right')[0],
+        shadow_bottom = container.find('.shadow.bottom')[0],
+
+        drag_t = container.find('.drag.t')[0],
+        drag_b = container.find('.drag.b')[0],
+        drag_r = container.find('.drag.r')[0],
+        drag_l = container.find('.drag.l')[0];
+
     function updateShadow(){
-        var offset = draggable.offset();
+        var offset = draggable.offset(),
+            height = draggable.height(),
+            width  = draggable.width();
 
-        container.find('.shadow.top' ).css({ width: (offset.left + draggable.width()), height: offset.top });
-        container.find('.shadow.left').css({ width: offset.left, height: (document.height-offset.top), top: offset.top });
-        container.find('.shadow.right').css({ width: (document.width-offset.left-draggable.width()), height: document.height, left: (offset.left+draggable.width()) });
-        container.find('.shadow.bottom').css({ width: draggable.width(), height: (document.height-offset.top-draggable.height()), left: offset.left, top: (offset.top+draggable.height()) });
+        shadow_top.style.width = (offset.left + width) + 'px';
+        shadow_top.style.height = offset.top + 'px';
 
-        container.find('.drag.t, .drag.b').css({ left: draggable.width()/2 - 3 });
-        container.find('.drag.r, .drag.l').css({ top: draggable.height()/2 - 3 });
+        shadow_left.style.width = offset.left + 'px';
+        shadow_left.style.height = (document.height - offset.top) + 'px';
+        shadow_left.style.top = offset.top + 'px';
+
+        shadow_right.style.width = (document.width - offset.left - width) + 'px';
+        shadow_right.style.height = document.height + 'px';
+        shadow_right.style.left = (offset.left + width) + 'px';
+
+        shadow_bottom.style.width = width + 'px';
+        shadow_bottom.style.height = (document.height - offset.top - height) + 'px';
+        shadow_bottom.style.left = offset.left + 'px';
+        shadow_bottom.style.top = (offset.top + height) + 'px';
+        
+        drag_t.style.left = (draggable.width()/2 - 3) + 'px';
+        drag_b.style.left = (draggable.width()/2 - 3) + 'px';
+
+        drag_r.style.top = (draggable.height()/2 - 3) + 'px';
+        drag_l.style.top = (draggable.height()/2 - 3) + 'px';
     }                
 
     updateShadow();
@@ -177,10 +203,10 @@ function initializeDrag(){
                 updateShadow();   
                 updateSizes();
             } else {
-                self.minus_draggable_area.css({
-                    left: self.minus_draggable_area[0].offsetLeft - (self.start_x - evt.pageX),
-                    top: self.minus_draggable_area[0].offsetTop - (self.start_y - evt.pageY)
-                });
+                var el = self.minus_draggable_area[0];
+
+                el.style.left = (el.offsetLeft - self.start_x + evt.pageX) + 'px';
+                el.style.top = (el.offsetTop - self.start_y + evt.pageY) + 'px';                
 
                 self.start_x = evt.pageX;
                 self.start_y = evt.pageY;
