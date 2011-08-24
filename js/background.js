@@ -282,8 +282,6 @@
             case 'takeScreenshot':                                    
                 anim.start();
 
-                console.log("ASDASD");
-                
                 browser.tabs.getSelected(null, function(tab) {
                     switch (msg.captureType) {
                         case 'visible':

@@ -72,115 +72,6 @@
                 font-family: Arial;
                 text-align: left;
             }
-
-            #minus_drag_area {
-                position: absolute;
-                z-index: 99999999;
-                top: 0px;
-                left: 0px;
-            }
-
-            #minus_drag_area .area {
-                position: absolute;
-
-                top: 100px;
-                left: 100px;
-                height: 300px;
-                width: 300px;
-
-                border: 1px dashed red;
-
-                cursor: move;
-
-                min-width: 30px;
-                min-height: 30px;
-            }
-        
-            #minus_drag_area .shadow {
-                position: absolute;
-
-                background-color: #333;
-                opacity: 0.5;
-            }
-            
-            #minus_drag_area .shadow.top {
-                top: 0px;
-                left: 0px;
-            }
-            
-            #minus_drag_area .shadow.left { left: 0px; }
-            
-            #minus_drag_area .shadow.top { top: 0px; }
-
-            #minus_drag_area .drag {
-                position: absolute;
-                width: 5px;
-                height: 5px;
-                border: 2px solid red;
-                border-radius: 5px;
-                background: white;
-            }
-
-            #minus_drag_area .drag.tl { top: -6px; left: -6px; cursor: nw-resize; }
-            #minus_drag_area .drag.tr { top: -6px; right: -6px; cursor: ne-resize; }
-            #minus_drag_area .drag.bl { bottom: -6px; left: -6px; cursor: sw-resize; }
-            #minus_drag_area .drag.br { bottom: -3px; right: -6px; cursor: se-resize; }
-
-            #minus_drag_area .drag.t { top: -6px; cursor: n-resize; }
-            #minus_drag_area .drag.r { right: -6px; cursor: e-resize; }
-            #minus_drag_area .drag.l { left: -6px; cursor: w-resize; }
-            #minus_drag_area .drag.b { bottom: -6px; cursor: s-resize; }
-
-
-            #minus_drag_area .size {
-                position: absolute;
-                top: -30px;
-                left: -2px;
-
-                height: 16px;
-                min-width: 60px;
-                border: 1px solid #333;
-                background: #333;
-                padding: 2px 4px;
-
-                opacity: 0.9;
-
-                color: white;
-                font-size: 13px;
-                font-family: Arial;                
-
-                border-radius: 3px;
-            }
-
-            #minus_drag_area .cancel, #minus_drag_area .ok {
-                position: absolute;
-                bottom: -25px;
-                padding: 3px 6px;
-
-                border: 3px;
-                border: 1px solid #ccc;
-
-                font-size: 14px;
-                font-family: Arial;
-                
-                background: #000;
-                color: white;
-                opacity: 0.8;
-
-                cursor: pointer;
-            }
-            
-            #minus_drag_area .cancel:hover, #minus_drag_area .ok:hover {
-                opacity: 1;
-            }
-            
-            #minus_drag_area .cancel {
-                right: 80px;
-            }
-            
-            #minus_drag_area .ok {
-                right: 0px;
-            }
         </style>
     </head>
     <body style="overflow-x: hidden; text-align: center;">
@@ -192,7 +83,7 @@
                         <option value="new">Create new gallery</option>
                         <option>Loading...</option>
                     </select>
-                    <a id="upload" class="minus_button">Save and Upload</a>
+                    <a id="upload" class="minus_button loading">Loading editor...</a>
                 </div>
             </div>
         </div>
@@ -220,6 +111,9 @@
             }
 
             $('#upload').bind('click', function(){
+                if ($(this).hasClass('loading'))
+                    return false;
+
                 $(this).html('0% uploaded');
                 
                 try {
@@ -287,7 +181,7 @@
 
             var _featherLoaded = false; 
              
-            Feather_APIKey = '';
+            Feather_APIKey = '82b5cf913';
             Feather_NoCloseButton = true;
             Feather_Theme = 'silver'; 
             Feather_EditOptions = 'all'; 
@@ -310,38 +204,39 @@
             } 
 
             Feather_OnLaunchComplete = function(){
+                var img = document.getElementById('image_for_edit'); 
+
+                f = AV.controlsWidgetInstance.getScaledDims(img.width, img.height);
+                img.width = f.width;
+                img.height = f.height;
+                AV.paintWidgetInstance.setDimensions(img.width, img.height);
+                AV.paintWidgetInstance.setBackground(img);
+                avpw$(AV.paintWidgetInstance.canvas).insertBefore("#avpw_temp_loading_image");
+                avpw$("#avpw_temp_loading_image").remove();
+                AV.tempLoadingImageSrc = img.src;
+                AV.controlsWidgetInstance.showWaitThrobber(!1);
+                AV.controlsWidgetInstance.loaderPhase = 2
+                
+                // if scroll visible move controls to visible part of the page
+                if (document.body.clientWidth < document.body.scrollWidth) {
+                    var controls = $("#avpw_controls");
+                    controls.css({
+                        'left': (window.outerWidth - controls.width() - 50)+'px',
+                        'top':  (window.innerHeight - controls.height() - 50)+'px' 
+                    });
+                }
+
+                $('#avpw_header a')
+                    .attr('href', "http://www.aviary.com/html5")
+                    .attr('target', "_blank");
+
+                $('#upload').html('Saved and Upload');
             }
              
             function launchEditor(imageid) { 
                 if (_featherLoaded) { 
                     var img = document.getElementById(imageid); 
                     aviaryeditor(imageid, "");            
-
-                    var init_aviary = function(){
-                        AV_paintWidget.setBackground(img);
-                        $("#avpw_controls").insertAfter(AV_paintWidget.canvas);
-                        $(AV_paintWidget.canvas).insertBefore("#avpw_temp_loading_image");
-                        $("#avpw_temp_loading_image").remove();
-                        AV_tempLoadingImageSrc = img.src;
-                        AV_controlsWidget.showWaitThrobber(!1), 
-                        $(AV_controlsWidget.onEggWaitThrobber).hide();
-                        AV_controlsWidget.loaderPhase = 2;
-
-                        // if scroll visible move controls to visible part of the page
-                        if (document.body.clientWidth < document.body.scrollWidth) {
-                            var controls = $("#avpw_controls");
-                            controls.css({
-                                'left': (window.outerWidth - controls.width() - 50)+'px',
-                                'top':  (window.innerHeight - controls.height() - 50)+'px' 
-                            });
-                        }
-
-                        $('#avpw_header a')
-                            .attr('href', "http://www.aviary.com/html5")
-                            .attr('target', "_blank");
-                    }
-
-                    setTimeout(init_aviary, 1000);
                 } 
             } 
         </script> 
