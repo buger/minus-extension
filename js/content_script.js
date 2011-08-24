@@ -307,6 +307,8 @@ $(document).bind('keydown', function (event) {
         keyCode > 64 && keyCode < 91) 
     {
         var charcode = String.fromCharCode(keyCode).toUpperCase(); 
+
+        console.log(charcode, settings)
         
         if (settings[charcode]) {
             browser.postMessage({ method: 'takeScreenshot', captureType: settings[charcode] });

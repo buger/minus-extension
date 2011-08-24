@@ -76,7 +76,7 @@
             }
             
             $('#visible_hotkey').val(store.get('hotkey_visible')||'V');
-            $('#area_hotkey').val(store.get('hotkey_region')||'P');
+            $('#area_hotkey').val(store.get('hotkey_region')||'R');
             $('#entire_hotkey').val(store.get('hotkey_full')||'H');
 
             $('.options').css({ 'visibility': 'visible' });
@@ -90,7 +90,7 @@
                     store.set(data[i].name, data[i].value);                    
                 }
 
-                browser.postMessage({ method: 'updateSettings' });
+                browser.postMessage({ method: 'updateSettings', global: true });
 
                 setTimeout(function(){
                     window.close();

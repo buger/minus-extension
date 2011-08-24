@@ -260,7 +260,7 @@
         }
     }
 
-    function updateSettings() {
+    function updateSettings(receiver) {
         if (store.get('icon_type') == 'bw') {
             browser.toolbarItem.setIcon({ path: "images/logo_small_bw.png" });
         } else {
@@ -269,10 +269,12 @@
 
         var settings = {};
         settings[store.get('hotkey_visible')||'V'] = 'visible';
-        settings[store.get('hotkey_region')||'P'] = 'region';        
+        settings[store.get('hotkey_region')||'R'] = 'region';        
         settings[store.get('hotkey_full')||'H'] = 'full';        
+
+        console.log(receiver);
     
-        browser.postMessage({ method: 'updateSettings', settings: settings });
+        browser.postMessage({ method: 'updateSettings', settings: settings }, receiver);
     }
 
     var listener = function(msg, sender) {
@@ -370,7 +372,7 @@
                 break;
 
             case 'updateSettings':
-                updateSettings();
+                updateSettings(msg.global ? undefined : sender.tab);
 
                 break;
         }
