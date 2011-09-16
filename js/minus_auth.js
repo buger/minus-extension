@@ -2,7 +2,11 @@ browser.addMessageListener(function(){
 
 });
 
-var user = document.getElementById('nav_username_display').innerHTML;
+try {
+    var user = document.getElementById('nav_username_display').innerHTML;
+} catch(e) {
+    var user = "";
+}
 
 browser.onReady(function(){    
     browser.postMessage({ method: "setUsername", username: user })

@@ -186,8 +186,10 @@
 
         if (user && user != "") {
             $('#user').html(user)        
-                .attr('href','http://minus.com/u/'+user);
+                .attr('href','http://minus.com/'+user);
         } else {
+            $('#signin').show();
+
             $('#user').html('Sign In')
                 .attr('href','http://minus.com');
         }

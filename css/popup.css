@@ -26,6 +26,34 @@ body {
     overflow: hidden;
 }
 
+#signin {
+    position: absolute; 
+    width: 350px; 
+    height: 100%; 
+    background: white; 
+    z-index: 9999999; 
+    padding-left: 50px;
+    padding-top: 10px;
+}
+
+#signin a:hover {
+    text-decoration: none;
+    color: #333;
+}
+
+#signin .signin {
+    position: absolute;
+    top: 10px;
+    right: 52px;
+    font-size: 14px;
+}
+
+#signin .signin a {
+    font-weight: bold;
+    font-size: 18px;
+    margin-left: 5px;
+}
+
 #header {
     height: 50px;
     padding-left: 10px;
