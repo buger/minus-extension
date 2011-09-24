@@ -9,26 +9,28 @@
             html, body {
                 background-color: #eee;
                 height: 100%;
+                font-family: helvetica, arial;
             }
 
             #avpw_filter_eggs_panel {
                 visibility: hidden;
-            }
+            }            
 
             #avpw_save_container {
                 display: none;
             }
 
             #panel {
-                height: 40px;
+                height: 50px;
                 width: 100%;
-                background: white;
-                border-bottom: 2px solid #ccc;
+                background: url(images/edit_image_panel.png);
 
                 position: fixed;
                 z-index: 999999;
 
                 text-align: center;            
+                
+                box-shadow: 0 0 5px 1px #666;
             }
 
             a.minus_button {
@@ -62,32 +64,162 @@
             #panel select {
                 color: #000;
                 font-family: helvetica, arial;
-                width: 250px;
+                width: 198px;
+                display: none;
+            }
+
+            .chzn-drop {
+                width: 196px !important;
+            }
+
+            .chzn-search input {
+                width: 160px !important;
             }
 
             #panel .container {
+                position: relative;
                 display: inline-block; 
-                padding-top: 6px;
+                padding-top: 9px;
                 margin-left: 10px;
                 font-family: Arial;
                 text-align: left;
+                padding-left: 370px;
+            }
+
+            #panel .logo {
+                display: inline-block;
+                position: absolute;
+                top: 0px;
+                left: 0px;
+            }
+
+            #panel .choose_gallery {
+                position: absolute;
+                top: 11px;
+                left: 135px;
+
+                background: url(images/choose_gallery_bg.png);                
+                width: 199px;
+
+                height: 28px;
+
+                border-radius: 5px;
+                box-shadow: 0 0 4px 1px rgba(0,0,0, 0.5);
+
+                padding: 0px 10px;
+            }
+            
+            #panel .choose_gallery.opened {
+                height: 130px;
+            }
+
+            #panel .choose_gallery .header {
+                cursor: pointer;
+
+                font-size: 12px;
+                font-weight: bold;
+                color: #666;
+                padding: 6px 0px;
+
+                background: url(images/dropdown_arrow_down.png) 190px 12px no-repeat;
+
+                margin-bottom: 10px;
+            }
+            
+            #panel .choose_gallery .additional {
+                display: none;
+            }
+
+            #panel .choose_gallery.opened .additional {
+                display: block;
+            }
+            
+            #panel .choose_gallery.opened .header {
+                background-image: url(images/dropdown_arrow_up.png);
+            }
+            
+            #panel .choose_gallery .header:hover {
+                color: #333;
+            }
+            
+            #panel .logo img {
+                vertical-align: bottom;
+            }
+
+            #panel .new {
+                font-size: 12px;
+                font-weight: bold;
+                color: #666;                
+                margin-top: 12px;
+                margin-bottom: 3px;
+            }
+
+            #new_folder_form input[type=text] {
+                width: 129px;
+                height: 21px;
+                font-size: 12px;
+                color: #666;
+                border-radius: 10px;
+                border: 1px solid #cfcfcf;
+                padding-left: 5px;
+
+                box-shadow: inset 2px 2px 5px rgba(150,150,150,0.2);                
+                outline: none;
+            }
+            
+            #panel input[type=image] {
+                vertical-align: bottom;
+            }
+            
+            #upload {
+                cursor: pointer;
+                display: inline-block;
+                width: 147px;
+                height: 30px;
+                line-height: 30px;
+                text-align: center;
+                font-size: 13px;
+                font-weight: bold;
+                color: white;
+                background: url(images/upload_button.png);
+                
+                border-radius: 16px;
+                box-shadow: 0 0 4px 1px rgba(50,50,50, 0.5);
+            }
+            
+            #upload:hover {
+                box-shadow: 0 0 4px 1px rgba(150,150,150, 0.5);
             }
         </style>
     </head>
     <body style="overflow-x: hidden; text-align: center;">
         <div id="panel">
             <div class="content">
-                <a href="http://minus.com" target="_blank"><img src="images/logo_big.png" height="" width="80px" style="position: absolute; left: 10px; top: 8px;"/></a>
                 <div class="container">
-                    <select id="gallery_list">
-                        <option value="new">Create new gallery</option>
-                        <option>Loading...</option>
-                    </select>
-                    <a id="upload" class="minus_button loading">Loading editor...</a>
+                    <a href="http://minus.com" target="_blank" class='logo'><img src="images/edit_image_logo.png" style="vertical-align: bottom" /></a>
+                    
+                    <div class='choose_gallery'>
+                        <div class="header">Choose a folder</div>
+                        
+                        <div class='additional'>
+                            <select id="gallery_list" data-placeholder="Search gallery" name="gallery">
+                                <option></option>
+                                <option>Loading...</option>
+                            </select>
+
+                            <div class="new">Create new folder</div>
+                            <form id="new_folder_form">
+                                <input type="text" placeholder="Type new folder name" name="new_folder"/>
+                                <input type="image" value="create" src="images/create_folder.png" />
+                            </form>                                
+                        </div>                            
+                    </div>
+
+                    <a id="upload" class="loading">Loading editor...</a>
                 </div>
             </div>
         </div>
-        <div style="height: 40px;"></div>
+        <div style="height: 50px;"></div>
 
         <img id="image_for_edit" style="max-width: 100%;" />
         
@@ -95,9 +227,36 @@
         <script src="js/chosen.jquery.min.js"></script>
         <script src="js/browser_api.js"></script>
         <script src="js/minus.js?1"></script>
+        <script src="js/store.js?1"></script>
         
         <script>
+            Minus.setToken(window.store.get('access_token'));
+            Minus.setUser(window.store.get('username'));
+
             $('#gallery_list').chosen();
+
+            $('#new_folder_form').bind('submit', function() {
+                var folder_name = $('#panel input[name=new_folder]');
+
+                Minus.createGallery(folder_name.val(), function(resp) {                    
+                    $('#gallery_list').prepend('<option value="'+resp.id+'">'+folder_name.val()+'</option>');
+                    $('#gallery_list').val(resp.id);
+                    
+                    $('#gallery_list').trigger("liszt:updated");
+                    $('#gallery_list').chosen();
+
+                    folder_name.val('');
+                });
+
+                folder_name.blur();
+
+                return false;
+            });
+
+
+            $('#panel .choose_gallery .header').bind('click', function() {
+                $(this).parent().toggleClass('opened');
+            });
 
             function queryParam(name){
               name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
@@ -137,26 +296,28 @@
             var pages_loaded = 1;
 
             function loadGalleries(){
-                Minus.timeline('mine', 1, function(response) {
-                    for (var i=1; i<=response.total_pages; i++) {
+                Minus.timeline(window.store.get('username'), 'folders', 1, function(response) {
+                    for (var i=1; i<=response.pages; i++) {
                         (function(page){
-                            Minus.timeline('mine', i, function(resp){
-                                $.each(resp.galleries, function(idx, item){
+                            Minus.timeline(window.store.get('username'), 'folders', i, function(resp){
+                                $.each(resp.results, function(idx, item){
                                     item.page = page;
                                     item.idx = idx;
+
+                                    console.log(item);
 
                                     galleries.push(item);
                                 })
 
                                 pages_loaded += 1;
                                 
-                                if (pages_loaded == response.total_pages) {
+                                if (pages_loaded == response.pages) {
                                     galleries = galleries.sort(function(a,b){ return ((a.page*100+a.idx) - (b.page*100+b.idx)) });
 
-                                    var options = ["<option value='new'>Create new gallery</option>"];
+                                    options = ["<option></option>"];                                    
 
                                     $.each(galleries, function(idx, item) {
-                                        options.push("<option value='"+item.reader_id+"'>"+(item.name||"Untitled")+"</option>");
+                                        options.push("<option value='"+item.id+"'>"+(item.name||"Untitled")+"</option>");
                                     });
 
                                     $('#gallery_list').html(options.join(""));
@@ -230,7 +391,7 @@
                     .attr('href', "http://www.aviary.com/html5")
                     .attr('target', "_blank");
 
-                $('#upload').removeClass('loading').html('Saved and Upload');                
+                $('#upload').removeClass('loading').html('Save and Upload');                
             }
              
             function launchEditor(imageid) { 

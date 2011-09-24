@@ -1,4 +1,8 @@
-(function(window, undefined) {        
+(function(window, undefined) {     
+    var API_KEY = 'fcebde22e53231ef95aa7238ef8dad';
+    var API_SECRET = 'b7b508ce60e4026292de30afd7cdce';
+    var API_TOKEN, API_USER;
+
     var emptyFunc = function(){};
 
     function clone(obj){
@@ -58,9 +62,8 @@
     }
 
     function Ajax(url, options) { 
-        if (options == undefined) {
-            options = {};
-        }
+        if (!options) options = {};
+        if (!options.params) options.params = {};
 
         var xhr = function() {
             if (typeof XMLHttpRequest === 'undefined') {
@@ -78,10 +81,13 @@
             }
 
             return new XMLHttpRequest();
-        }();            
+        }();           
+        
+        if (API_TOKEN)
+            options.params['bearer_token'] = API_TOKEN;
 
-        if (options.method !== "POST" && options.params) {
-            url += "?" + hashToQueryString(options.params);
+        if (options.binaryData || options.method !== "POST" && options.params) {            
+            url += (url.match(/\?/) ? "&" : "?") + hashToQueryString(options.params);
         }
         
         xhr.open(options.method || "GET", url, true);  
@@ -144,7 +150,7 @@
 
 
     var Minus = {
-        prefix: 'http://minus.com/api/'
+        prefix: 'http://minus.com/api/v2/'
     }        
 
     Minus.callMethod = function(method, options) {        
@@ -161,7 +167,7 @@
         }
 
         new_options.onError = function(resp, xhr){
-            console.log("Error while calling method '%s'", method, options, resp);
+            console.log("Error while calling method '%s'", method, options);
 
             (options.onError || emptyFunc)(resp, xhr);        
         }
@@ -169,8 +175,13 @@
         return new Ajax(this.prefix + method, new_options);
     }
 
-    Minus.createGallery = function(callback) {
-        this.callMethod('CreateGallery', {
+    Minus.createGallery = function(name, callback) {
+        if (!name)
+            name = "New Folder";
+
+        this.callMethod('users/'+API_USER+"/folders", {
+            method: "POST",
+            params: {'name': name},
             onSuccess: callback,
             onError: function(resp) {
                 callback({ error: "api_error", message: "Error while calling API method 'CreateGallery'" });
@@ -178,27 +189,10 @@
         });
     }
 
-    Minus.saveGallery = function(name, editor_id, items, callback) {
-        this.callMethod('SaveGallery', {
-            method: "POST",
-            params: {
-                name: name,
-                id: editor_id,
-                key: "OK",
-                items: items
-            },            
-            onSuccess: callback,
-            onError: function(resp) {
-                callback({ error: "api_error", message: "Error while calling API method 'saveGallery'" });
-            }
-        });
-    }
-
-    
-    Minus.uploadItem = function(editor_id, filename, mime, binaryData, callback, onProgress) {
+    Minus.uploadItem = function(id, filename, mime, binaryData, callback, onProgress) {
         filename = encodeURIComponent(filename.replace(/^\./,''));        
 
-        var params = hashToQueryString({ editor_id: editor_id, key: "OK", filename:filename });
+        var params = hashToQueryString({ caption:filename, filename:filename });        
 
         var boundary = '---------------------------';
         boundary += Math.floor(Math.random()*32768);
@@ -209,11 +203,21 @@
         data += 'Content-Disposition: form-data; name="file"; filename="' + filename + '"' + "\r\n";
         data += 'Content-Type: ' + mime + "\r\n\r\n";
         data += binaryData;
+        data += "\r\n" + '--' + boundary + "\r\n";
+
+        data += 'Content-Disposition: form-data; name="caption"';
         data += "\r\n";
+        data += "\r\n";
+        data += filename;
+        data += "\r\n" + '--' + boundary + "\r\n";
+        data += 'Content-Disposition: form-data; name="filename"';
+        data += "\r\n";
+        data += "\r\n";
+        data += filename
         data += "\r\n" + '--' + boundary + '--'
         data += "\r\n";
 
-        this.callMethod('UploadItem?'+params, {
+        this.callMethod('folders/'+id+'/files?'+params, {
             method: "POST",
             headers: { 'Content-Type': 'multipart/form-data; boundary=' + boundary },
             binaryData: data,            
@@ -288,41 +292,116 @@
         });
     }
 
-    Minus.getItems = function(reader_id, callback) {
-        this.callMethod('GetItems/m'+reader_id, {
-            onSuccess: callback,
-            onError: function(resp) {
-                callback({ error: "api_error", message: "Error while calling API method 'GetItems'" });
-            }
-        });
-    }
-       
-    Minus.timeline = function(type, page, callback) {
+    Minus.timeline = function(username, type, page, callback) {
         if (!page)
             page = 1;
+        
+        this.callMethod('users/'+username+'/folders', {
+            params: { page: page },
+            onSuccess: function(resp) {
+                for (var i=0; i<resp.results.length; i++) {
+                    resp.results[i].creator_name = resp.results[i].creator.match(/\w+$/)[0];
+                }
 
-        this.callMethod('pane/'+type+'.json/'+page, {
-            onSuccess: callback,
+                callback(resp);
+            },
             onError: function(resp) {                
                 callback({ error: "api_error", message: "Error while calling API method 'MyGalleries'" });
             }
         });
     }
 
-    Minus.getUsername = function(callback) {
-        new Ajax('http://minus.com', {
-            onSuccess: function(response) {
-                var match = response.match(/\/u\/(.*)\/pref"/);
+    Minus.activeUser = function(callback) {
+        this.callMethod('activeuser', {
+            onSuccess: function(resp) {
+                Minus.setUser(resp.username);
 
-                if (match && match[1]) {
-                    callback({ username: match[1] });
-                } else {
-                    callback({ error: 'not_logged' });
-                }
-            }
+                callback(resp);
+            },
+            onError: callback
         });
     }
 
+    Minus.registerUser = function(username, password, email, callback) {
+        var params = {
+            'username': username,
+            'password1': password,
+            'password2': password,
+            'email': email
+        }
+
+        new Ajax("https://minus.com/api/login/register", {
+            method: "POST",
+
+            params: params,
+
+            onSuccess: function(response) {
+                callback(response);
+            },
+
+            onError: function(response) {
+                callback({ success: false });
+            }
+        });        
+    }
+
+
+    Minus.oauthToken = function(username, password, callback) {
+        var params = {
+            'grant_type': 'password',
+            'client_id': API_KEY,
+            'client_secret': API_SECRET,
+            'scope': 'read_all modify_all upload_new',
+            'username': username,
+            'password': password
+        }
+
+        new Ajax("https://minus.com/oauth/token", {
+            params: params,
+
+            onSuccess: function(response) {
+                Minus.setToken(response.access_token);
+
+                callback(response);
+            },
+
+            onError: function(response) {
+                callback({ error: 'not_logged' });
+            }
+        });
+    }
+    
+    Minus.refreshToken = function(refresh_token, callback) {
+        var params = {
+            'grant_type': 'refresh_token',
+            'client_id': API_KEY,
+            'client_secret': API_SECRET,
+            'refresh_token': refresh_token,
+            'scope': 'modify_all'
+        }
+
+        new Ajax("https://minus.com/oauth/token", {
+            params: params,
+
+            onSuccess: function(response) {
+                Minus.setToken(response.access_token);
+
+                callback(response);
+            },
+
+            onError: function(response) {
+                callback({ error: 'wrong_token' });
+            }
+        });               
+    }
+
+    Minus.setToken = function(token) {
+        API_TOKEN = token;
+    }
+
+    Minus.setUser = function(user) {
+        API_USER = user;
+    }
 
     // Make it Global
     window.Minus = Minus;

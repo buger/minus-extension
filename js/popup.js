@@ -30,33 +30,47 @@
         updateTimeline();
     });
 
-    function updateTimeline() {
+    function updateTimeline(skip_loader) {
         $('#timeline a.active').removeClass('active');
         $('#timeline a[data-timeline='+timeline_type+']').addClass('active');
         
-        $('#my_galleries').html("<li class='loader'></li>");
+        console.log(!skip_loader);
+
+        if (!skip_loader) 
+            $('#my_galleries').html("<li class='loader'></li>");
 
         reinitializePane();
 
         updateGalleries();
     }
 
-    var ICON_ARCHIVE = "http://minus.com/smedia/minus/images/file_icons/generic_archive.png";
+    var ICON_ARCHIVE = "../images/generic_file.png";
 
     function updateGalleries() {
-        Minus.timeline(timeline_type, current_page, function(resp) {
-            total_pages = resp.total_pages;
+        Minus.timeline(window.store.get('username'), timeline_type, current_page, function(resp) {
+            total_pages = resp.pages;
 
             $("#my_galleries .loader").remove();
 
-            var html = $('#galleries_template').tmpl({galleries: resp.galleries});        
-            $('#my_galleries').append(html);
+            var html = $('#galleries_template').tmpl({ galleries: resp.results });            
+
+            if (current_page == 1) {
+                $('#my_galleries').html(html);
+            } else {
+                $('#my_galleries').append(html);
+            }
+
+            $('#my_galleries').find('.items.date').timeago()            
 
             var loaded_images = 0;
             var imageLoaded = function() {
                 loaded_images += 1;
                 
-                if (loaded_images == resp.galleries.length) {
+                if (loaded_images == resp.results.length) {
+                    if (current_page == 1) {
+                        window.store.set('last_view', $('#my_galleries').html());
+                    }
+
                     reinitializePane()
                 }
             }
@@ -70,7 +84,7 @@
                 if (!image)
                     return img_preloader.src = ICON_ARCHIVE;                
 
-                img_preloader.src = "http://k.min.us/k" + $(img).data('image');
+                img_preloader.src = $(img).data('image');
                     
                 img_preloader.onload = function(){
                     if (img_preloader.naturalHeight == 0) {                            
@@ -95,28 +109,32 @@
                 pane.reinitialise(); 
             } else {
                 $("#galleries_container")
-                    .unbind('jsp-scroll-y')
-                    .bind(                    
-                        'jsp-scroll-y',
-                        function(event, scrollPositionX, isAtLeft, isAtRight) {
-                            // Load next page
-                            if (isAtRight) {
-                                if (current_page < total_pages) {
-                                    current_page += 1;
-
-                                    $('#my_galleries').append("<li class='loader'></li>");
-
-                                    updateGalleries(current_page);
-                                }
-                                
-                                reinitializePane();
-                            }
-                        }
-                    )
                     .jScrollPane({
-                        maintainPosition: true
+                        maintainPosition: true,
+                        verticalDragMinHeight: 87,
+                        verticalDragMaxHeight: 87
                     });
             }
+
+            $("#galleries_container")
+                .unbind('jsp-scroll-y')
+                .bind(                    
+                    'jsp-scroll-y',
+                    function(event, scrollPositionX, isAtLeft, isAtRight) {
+                        // Load next page
+                        if (isAtRight) {
+                            if (current_page < total_pages) {
+                                current_page += 1;
+
+                                $('#my_galleries').append("<li class='loader'></li>");
+
+                                updateGalleries(current_page);
+                            }
+                            
+                            reinitializePane();
+                        }
+                    }
+                );
 
         });
     }
@@ -181,22 +199,122 @@
         }
     );
 
+    function authUser() {
+        var $form = $('#signin form.signin');    
+        var form_data = $form.serializeArray();
+
+        Minus.oauthToken(form_data[0].value, form_data[1].value, 
+            function(resp) {
+                if (resp.error) {
+                    $('#signin .error').html('Wrong user/password combination.');
+                } else {
+                    window.store.set('username', form_data[0].value);
+
+                    console.log(form_data);
+
+                    if (form_data[2]) {
+                        window.store.set('access_token', resp.access_token);
+                        window.store.set('refresh_token', resp.refresh_token);
+                    } else {
+                        window.store.remove('access_token');
+                        window.store.remove('refresh_token');
+                    }
+                                
+                    updateUser();
+                     
+                    $('#signin').hide();
+                    $('#main_content').show();
+
+                    $('body').css({ 'width': '380px' });
+                }
+            }
+        );
+
+        return false;
+    }
+
+    $('#signin form.signin').bind('submit', authUser);
+    
+    function registerUser() {
+        var $form = $('#signin form.signup');    
+        var form_data = $form.serializeArray();
+
+        Minus.registerUser(form_data[0].value, form_data[1].value, form_data[2].value, 
+            function(resp) {
+                if (!resp.success) {
+                    $('#signin .error').html(resp.username);
+                } else {
+                    $signin_form = $('#signin form.signin');
+
+                    $signin_form.find('input[name=username]').val(form_data[0].value);
+                    $signin_form.find('input[name=password]').val(form_data[1].value);
+
+                    authUser();
+                }
+            }
+        );
+
+        return false;
+    }
+
+   
+    $('#signin form.signup').bind('submit', registerUser);
+
     function updateUser() {
         var user = window.store.get('username');
+        var token = window.store.get('access_token');        
+        var skip_loader = window.store.get('last_view');
 
-        if (user && user != "") {
-            $('#user').html(user)        
-                .attr('href','http://minus.com/'+user);
+        console.log(user, token);
+        
+        if (token && user) { 
+            Minus.setToken(token);
+
+            Minus.activeUser(function(resp) {
+                if (resp.invalid_token) {
+                    Minus.refreshToken(window.store.get('refresh_token'),
+                        function(refresh_resp) {
+                            if (refresh_resp.error) {
+                                $('body').css({ 'width': '542px' });
+                                $('#signin').show();
+                                
+                                $('#main_content').hide();
+                            } else {
+                                console.log(refresh_resp);
+
+                                window.store.set('access_token', refresh_resp.access_token);
+                                window.store.set('refresh_token', refresh_resp.refresh_token);
+
+                                updateTimeline(skip_loader);
+                            }
+                        }
+                    );
+                } else {
+                    updateTimeline(skip_loader);
+                }
+            });
+            
+            $('#user').attr('href','http://minus.com/'+user);
         } else {
+            $('body').css({ 'width': '542px' });            
             $('#signin').show();
-
-            $('#user').html('Sign In')
-                .attr('href','http://minus.com');
+                                
+            $('#main_content').hide();
         }
     }
 
     function updateUI() {
-        updateTimeline();
+        if (window.store.get('last_view')) {            
+            $('#my_galleries').html(window.store.get('last_view'));
+            $("#galleries_container")
+                .jScrollPane({
+                    maintainPosition: true,
+                    verticalDragMinHeight: 87,
+                    verticalDragMaxHeight: 87
+                });
+
+        }
+
         updateUser();
 
         browser.tabs.getSelected(null, function(tab) {

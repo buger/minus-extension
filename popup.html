@@ -7,53 +7,59 @@
 
         <script id="galleries_template" type="text/x-jquery-tmpl"> 
             {{each galleries}}
-            <li {{if $value.editor_id == 'Unavailable'}}class="not_editable"{{/if}}>
+            <li {{if $value.id == 'Unavailable'}}class="not_editable"{{/if}}>
                 <table cellspacing="0" cellpadding="0" width="100%">
                     <tr>                    
-                        <td width="80px" class="preview" rowspan="3" valign="top" align="center">
-                            <a target='_blank' href='http://minus.com/m${$value.reader_id}'><img data-image='${$value.thumbnail_id}' src="images/loading.gif" style="max-width: 80px; max-height: 60px;" /></a>
+                        <td width="95px" class="preview" rowspan="3" valign="top" align="center">
+                            <a target='_blank' href='http://minus.com/m${$value.id}'>
+                                <img data-image='${$value.thumbnail_url}' 
+                                     src="images/loading.gif" 
+                                     style="max-width: 95px; max-height: 60px;" />
+                            </a>
                         </td>
                         <td class="header">
-                            <a class='name' target='_blank' href='http://minus.com/m${$value.reader_id}'>${$value.name||'Untitled'}</a>
+                            <a class='name' target='_blank' href='http://minus.com/m${$value.id}'>${$value.name||'Untitled'}</a>
                         </td>
                         <td class="action" rowspan="3" valign="top" align="right">
                             {{if $value.is_public}}
-                            <img src="images/ic_public.png" width="20px" height="20px" title="Public gallery" />
+                            <img src="images/public_bage.png" width="54px" height="54px" title="Public gallery" />
                             {{/if}}
-                            <a style="display: none"><img src="images/more_content.png" width="25px" /></a>
                         </td>
                     </tr>
                     <tr>
                         <td class="creator">
-                            <span>by: </span><a href='http://minus.com/u/${$value.creator}' target='_blank'>${$value.creator}</a>
+                            {{if $value.creator_name}}
+                            <span>by: </span><a href='${$value.creator}' target='_blank'>${$value.creator_name}</a>
+                            {{/if}}
                         </td>
                     </tr>
                     <tr>
                         <td valign="bottom" style="position: relative;">
                             <span class="items count">                    
-                            {{if $value.item_count>0}}
-                                {{if $value.item_count == 1 }}
-                                    1 item
+                            {{if $value.file_count > 0}}
+                                {{if $value.file_count == 1 }}
+                                    1 file
                                 {{else}}
-                                    ${$value.item_count} items
+                                    ${$value.file_count} files
                                 {{/if}}
                             {{else}}
                                 empty
                             {{/if}}
                             </span>
+                            <span class="items dot">·</span>
                             <span class="items clicks">                    
-                            {{if $value.clicks>0}}
-                                {{if $value.clicks == 1 }}
+                            {{if $value.view_count > 0}}
+                                {{if $value.view_count == 1 }}
                                     1 view
                                 {{else}}
-                                    ${$value.clicks} views
+                                    ${$value.view_count} views
                                 {{/if}}
                             {{else}}
-                                not viewed
+                                0 views
                             {{/if}}
                             </span>
-                            <span class="items">
-                                ${$value.last_visit}
+                            <span class="items dot">·</span>
+                            <span class="items date" title="${$value.date_last_updated}"> 
                             </span>
                         </td>
                     </tr>
@@ -63,65 +69,91 @@
         </script>
     </head>
     <body>
-        <div id="signin" style="display: none">            
-            <img src="images/logo_large.png" width="300px"/> 
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <div class="links" style="position: relative">
-                <a href="http://minus.com" target="_blank" style="color: #6A6A6A; font-size: 12px; vertical-align: middle;">
-                    <img src="images/signup.png"/>
-                    <br/>
-                    Get a free account, it takes 5 seconds
-                </a>
-                <div class="signin">
-                    <span>or</span>
-                    <a href="http://minus.com" target="_blank" >Sign In</a>
+        <div id="signin" style="display: none">
+            <div class="logo"> 
+            </div>            
+            <div class='relative'>
+                <div class='error'></div>
+                <form class="signin">
+                    <h3>Sign In</h3>
+                    <input type="text" name="username" placeholder="Username" />
+                    <input type="password" name="password" placeholder="Password" /> 
+
+                    <label>
+                        <input type="checkbox" name="remember" checked />
+                        Remember me.
+                    </label>
+
+                    <input type="submit" value="Sign In" />
+                </form>
+                <form class="signup">
+                    <h3>Sign Up</h3>
+                    <input type="text" name="username" placeholder="Username" />
+                    <input type="password" name="password" placeholder="Password" /> 
+                    <input type="text" name="email" placeholder="Email (Optional)" /> 
+
+                    <input type="submit" value="Sign Up"/>
+                </div>                
+            </div>
+        </div>
+
+        <div id="main_content">
+            <div id="header">
+                <div href="#" id="take_screenshot" class='button'>
+                    <span>Take Screenshot</span>
                 </div>
-            </div>                
-        </div>
 
-        <div id="header">
-            <a href="#" id="take_screenshot" class='button'><img src="images/btn_camera_normal.png" style="vertical-align: bottom; opacity: 0.8; margin-right: 5px;"/> Take Screenshot</a>
+                <div class="more">
+                    <div style="display: none">
+                        <div class="connector"></div>
 
-            <a class="more">
-                <span><img src="images/gear.png" width="20px" height="20px" /></span>
-                <div style="display: none">
-                    <ul>
-                        <li data-screenshot-type="visible">Visible Part of Page <span>Ctrl+Alt+V</span></li>
-                        <li data-screenshot-type="region">Selected Area <span>Ctrl+Alt+R</span></li>
-                        <li data-screenshot-type="full">Entire page <span>Ctrl+Alt+H</span></li>
+                        <ul>
+                            <li data-screenshot-type="visible">
+                                <label>Visible Part of Page</label>
+                                <span>Ctrl+Alt+V</span>
+                            </li>
 
-                        <li class="edit_image_config">
-                            <input type="checkbox" id="edit_image"/>
-                            <label for="edit_image">Edit image before uploading</label>
-                        </li>
-                    </ul>
+                            <li data-screenshot-type="region">
+                                <label>Selected Area</label>
+                                <span>Ctrl+Alt+R</span>
+                            </li>
+
+                            <li data-screenshot-type="full">
+                                <label>Entire page</label>
+                                <span>Ctrl+Alt+H</span>
+                            </li>
+
+                            <li class="edit_image_config">
+                                <input type="checkbox" id="edit_image"/>
+                                <label for="edit_image">Edit image before uploading</label>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-            </a>
+            </div>
+
+            <div id="timeline">
+                <span>Dashboard</span>
+
+                <a data-timeline='mine'>My Files</a>
+                <a data-timeline='feed'>Feed</a>
+            </div>
+
+            <div id="galleries_container">
+                <ul id="my_galleries">                
+                    <li class="loader"></li>
+                </ul>
+            </div>
+            <div id="footer">
+                <a href="http://minus.com" target="_blank"><img src="images/bottom_logo.png" width="60px"/></a>
+                <a id="user" target="_blank">profile</a>
+                <a href="http://min.us/pages/galleries" target="_blank" id="galleries_header" class="minus_link"></a>
+            </div>    
         </div>
 
-        <div id="timeline">
-            <span>Dashboard:</span>
-
-            <a data-timeline='mine'>My Files</a>
-            <a data-timeline='feed'>Feed</a>
-            <a data-timeline='history'>History</a>
-        </div>
-
-        <div id="galleries_container">
-            <ul id="my_galleries">                
-                <li class="loader"></li>
-            </ul>
-        </div>
-        <div id="footer">
-            <a href="http://minus.com" target="_blank"><img src="images/logo_big.png" width="60px"/></a>
-            <a id="user" target="_blank"></a>
-            <a href="http://min.us/pages/galleries" target="_blank" id="galleries_header" class="minus_link"></a>
-        </div>    
 
         <script src="js/jquery.min.js"></script>
+        <script src="js/jquery.timeago.js"></script>
         <script src="js/jquery.tmpl.min.js"></script>
         <script src="js/jquery.mousewheel.js"></script>
         <script src="js/jquery.jscrollpane.min.js"></script>

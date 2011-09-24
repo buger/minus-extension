@@ -62,18 +62,10 @@
 .jspDrag
 {
 	background: #ACACAC;
-    opacity: 0.5;
 	position: relative;
 	top: 0;
 	left: 0;
 	cursor: pointer;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px
-}
-
-.jspDrag:hover {
-    opacity: 1;
 }
 
 .jspHorizontalBar .jspTrack,
