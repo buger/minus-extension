@@ -430,7 +430,8 @@ body {
 
 .loading #take_screenshot {
     text-indent: -99999px;
-    background: url(../images/loading.gif) center no-repeat;
+    background-image: url(../images/loading.gif), url(../images/take_screenshot.png);
+    background-position: center, top center;
 }
 
 .loading .more {

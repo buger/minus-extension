@@ -94,6 +94,7 @@
 
         xhr.onreadystatechange = function(){
             if (xhr.readyState == 4) {
+
                 // Parse response if it contains JSON string
                 var response = xhr.responseText[0] === '{' ? (function(){
                                                                  return window.JSON && window.JSON.parse ?
@@ -102,6 +103,7 @@
                                                              }()) :
                                                              xhr.responseText;
 
+                console.log(xhr.status, response);
                 if (xhr.status == 200) {
                     (options.onSuccess || emptyFunc)(response, xhr);
                 } else {
@@ -151,7 +153,9 @@
 
     var Minus = {
         prefix: 'http://minus.com/api/v2/'
-    }        
+    }   
+
+    Minus.Ajax = Ajax;
 
     Minus.callMethod = function(method, options) {        
         if (options == undefined) {

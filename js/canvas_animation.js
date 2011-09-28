@@ -43,11 +43,7 @@ var Animation = function(image, canvas, frames){
     stop: function(){
       clearInterval(self.timer);
       
-      if (store.get('icon_type') == 'bw') {
-        browser.toolbarItem.setIcon({ path: "images/logo_small_bw.png" });
-      } else {
-        browser.toolbarItem.setIcon({ path: "images/logo_small.png" });
-      }
+      browser.toolbarItem.setIcon({ path: "images/logo_small.png" });
 
       frame = 0;
       draw();

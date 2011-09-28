@@ -1,17 +1,4 @@
 (function(){
-    function inputForShare(selector) {
-        $(selector)
-            .live('click', function() {            
-                this.select();
-            })
-            .live('keydown', function(evt) {
-                return false;
-            })
-            .live('mousemove', function(evt) {
-                this.select();
-            }); 
-    }
-
     function reinitializePane() {        
         var pane = $("#galleries_container").data('jsp');
         if (pane)
@@ -20,7 +7,7 @@
     
     var current_page = 1;
     var total_pages;
-    var timeline_type = window.store.get('timeline_type') || 'history';
+    var timeline_type = window.store.get('timeline_type') || 'mine';
     
     $('#timeline a').live('click', function(){
         current_page = 1;
@@ -34,8 +21,6 @@
         $('#timeline a.active').removeClass('active');
         $('#timeline a[data-timeline='+timeline_type+']').addClass('active');
         
-        console.log(!skip_loader);
-
         if (!skip_loader) 
             $('#my_galleries').html("<li class='loader'></li>");
 

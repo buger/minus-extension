@@ -330,11 +330,15 @@
         _c_addMessageListener: function(listener) {
             chrome.extension.onRequest.addListener(listener);
             
-            browser.onReady();
+            
+            if (!browser._isNetworkInitialized) {
+                browser.onReady();
+            }
         },
 
         _c_removeMessageListeners: function() {
             console.log("Removing listeners:", this._listeners.length);
+
             for (var i=0; i<this._listener.length; i++) {
                 chrome.extension.onRequest.removeListener(this._listeners[i]);
             }
@@ -594,9 +598,9 @@
                     dest.dispatchMessage("_method", message) 
                 } else {
                     if (browser.isBackgroundPage) {
-                        chrome.tabs.sendRequest(dest.id, message);
+                        chrome.tabs.sendRequest(dest.id, message, callback);
                     } else {
-                        chrome.extension.sendRequest(message);
+                        chrome.extension.sendRequest(message, callback);
                     }
                 }
             } else {
@@ -789,4 +793,84 @@
     }())
     
     window.browser = browser;
+
+    
+    var FakeXMLHttpRequest = function() {
+        this.requestHeaders = {};
+        this.binary = false;
+        this.status = 0,
+        this.readyState = 1,
+
+        this.open = function(method, url, async) {
+            this.method = method;
+            this.url = url;
+            this.async = async;
+        }
+
+        this.send = function(data) {            
+            var self = this;
+
+            browser.postMessage({ 
+                method: '_ajax',
+
+                httpOptions: {
+                    method: this.method,
+                    url: this.url,
+                    async: this.async,
+                    binary: this.binary,
+                    headers: this.requestHeaders,
+                    mime_type: this.mime_type
+                }
+            }, null, 
+                function(resp) {
+                    self.readyState = 4;
+                    self.responseText = resp.responseText;
+                    self.responseHeaders = resp.responseHeaders;
+                    self.status = resp.status;
+
+                    if (self.onreadystatechange) {
+                        self.onreadystatechange();
+                    }
+                }
+            );
+        }
+
+        this.sendAsBinary = function(data) {
+            this.binary = true;
+
+            this.send(data);
+        }
+        
+        this.overrideMimeType = function(mime_type) {
+            this.mime_type = mime_type;
+        }
+
+        this.abort = function() {                   
+        }
+
+        this.setRequestHeader = function(headers) {
+            for (header in headers) {
+                this.requestHeaders[header] = headers[header];
+            }
+        }
+        
+        this.getResponseHeader = function(header) {
+            return this.responseHeaders[header];            
+        }
+
+        this.getAllResponseHeaders = function() {
+            var headers = '';
+
+            for (key in this.responseHeaders) {
+                headers += key + ': ' + this.responseHeaders[key] + "\n";
+            }
+
+            return headers;
+        }
+    }
+
+    if (!browser.isBackgroundPage) {
+        window.XMLHttpRequest = FakeXMLHttpRequest;
+    }
+
 }(window));                    

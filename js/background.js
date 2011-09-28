@@ -280,7 +280,7 @@
         browser.postMessage({ method: 'updateSettings', settings: settings }, receiver);
     }
 
-    var listener = function(msg, sender) {
+    var listener = function(msg, sender, sendResponse) {
         console.log('Received message', msg);
 
         switch (msg.method) {
@@ -378,6 +378,37 @@
                 updateSettings(msg.global ? undefined : sender.tab);
 
                 break;
+
+            case 'timeline':
+                Minus.timeline(msg.username, msg.timeline, msg.page, 
+                    function(resp) {
+                        sendResponse(resp);
+                    }
+                );
+
+                break;
+
+            case '_ajax':
+                var xhr;                
+                var send = function() { 
+                    console.log('sending response', sendResponse);
+
+                    sendResponse({
+                        status: xhr.status,
+                        responseText: xhr.responseText,
+                        responseHeaders: xhr.getAllResponseHeaders() 
+                    });
+                };
+
+                xhr = new Minus.Ajax(msg.httpOptions.url, {                    
+                    method: msg.httpOptions.method,                    
+                    headers: msg.httpOptions.headers,
+                    binaryData: msg.httpOptions.binary ? msg.httpOptions.data : null,
+                    params: msg.httpOptions.binary ? null : msg.httpOptions.data,
+
+                    onSuccess: send,
+                    onError: send
+                });
         }
     }
 

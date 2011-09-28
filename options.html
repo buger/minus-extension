@@ -14,22 +14,6 @@
 
         <div class="options" style="visibility: hidden">
             <h3>Icon</h3>
-            <ul class="icon_type">
-                <li style="text-align: center">
-                    <label for="icon_type_color">
-                        <img src="images/logo_small.png"/>
-                    </label>
-                    <br/>
-                    <input type="radio" name="icon_type" id="icon_type_color" value=''/>                    
-                </li>
-                <li style="text-align: center">
-                    <label for="icon_type_bw">
-                        <img src="images/logo_small_bw.png"/>
-                    </label>
-                    <br/>
-                    <input type="radio" name="icon_type" id="icon_type_bw" value='bw'/>                    
-                </li>                
-            </ul>
 
             <h3>Shortcuts</h3>
             <ul class="shortcuts">
@@ -68,12 +52,6 @@
                     this.innerHTML = "Ctrl+Alt+";
                 }
             });            
-
-            if (store.get('icon_type') == 'bw') {
-                $('#icon_type_bw').attr('checked', 'checked');
-            } else {
-                $('#icon_type_color').attr('checked', 'checked');
-            }
             
             $('#visible_hotkey').val(store.get('hotkey_visible')||'V');
             $('#area_hotkey').val(store.get('hotkey_region')||'R');
