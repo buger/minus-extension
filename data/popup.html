@@ -68,13 +68,13 @@
             {{/each}}
         </script>
     </head>
-    <body>
+    <body class="popup">
         <div id="signin" style="display: none">
             <div class="logo"> 
             </div>            
             <div class='relative'>
                 <div class='error'></div>
-                <form class="signin">
+                <form class="signin" autocomplete="off">
                     <h3>Sign In</h3>
                     <input type="text" name="username" placeholder="Username" />
                     <input type="password" name="password" placeholder="Password" /> 
@@ -86,7 +86,7 @@
 
                     <input type="submit" value="Sign In" />
                 </form>
-                <form class="signup">
+                <form class="signup" autocomplete="off">
                     <h3>Sign Up</h3>
                     <input type="text" name="username" placeholder="Username" />
                     <input type="password" name="password" placeholder="Password" /> 
@@ -148,11 +148,10 @@
             </div>
             <div id="footer">
                 <a href="http://minus.com" target="_blank"><img src="images/bottom_logo.png" width="60px"/></a>
-                <a id="user" target="_blank">profile</a>
+                <a href="#" id="user" target="_blank">profile</a>
                 <a href="http://min.us/pages/galleries" target="_blank" id="galleries_header" class="minus_link"></a>
             </div>    
         </div>
-
 
         <script src="js/jquery.min.js"></script>
         <script src="js/jquery.timeago.js"></script>

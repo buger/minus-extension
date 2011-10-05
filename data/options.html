@@ -12,39 +12,43 @@
             Extension configuration
         </h1>
 
-        <div class="options" style="visibility: hidden">
-            <h3>Icon</h3>
+        <div class="options" >
+            <div>
+                <h3>Shortcuts</h3>
+                <ul class="shortcuts">
+                    <li>
+                        <label>Visible Part of Page</label>
+                        <span>Ctrl+Alt+</span>
+                        
+                        <input type="text" id="visible_hotkey" name="hotkey_visible" />
+                    </li>
+                    <li class='selected'>
+                        <label>Selected Area</label>
+                        <span>Ctrl+Alt+</span>
 
-            <h3>Shortcuts</h3>
-            <ul class="shortcuts">
-                <li>
-                    <label>Visible Part of Page</label>
-                    <span>Ctrl+Alt+</span>
+                        <input type="text" id="area_hotkey" name="hotkey_region" />
+                    </li>
+                    <li>
+                        <label>Entire Page</label>
+                        <span>Ctrl+Alt+</span>
 
-                    <select id="visible_hotkey" name="hotkey_visible"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option><option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option><option value="Z">Z</option></select>
-                </li>
-                <li>
-                    <label>Selected Area</label>
-                    <span>Ctrl+Alt+</span>
-
-                    <select id="area_hotkey" name="hotkey_region"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option><option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option><option value="Z">Z</option></select>
-                </li>
-                <li>
-                    <label>Entire Page</label>
-                    <span>Ctrl+Alt+</span>
-
-                    <select id="entire_hotkey" name="hotkey_full"><option value="">--</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option><option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option><option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option><option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option><option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option><option value="Y">Y</option><option value="Z">Z</option></select>
-                </li>                                   
-            </ul>
-            <br/> 
-            <a class="minus_button" id="submit">Save & Close</a>
+                        <input type="text" id="entire_hotkey" name="hotkey_entire" />
+                    </li>                                   
+                </ul>
+            </div>
         </div>
         </form>
 
         <script src="js/jquery.min.js"></script>
-        <script src="js/browser_api.js"></script>        
         <script src="js/store.js"></script>
+        <script src="js/browser_api.js"></script>        
         <script>
+            $('input[type=text]').bind('keydown', function(evt) {
+                $(this).val(String.fromCharCode(evt.keyCode));
+
+                return false;
+            });
+
             $('.shortcuts span').each(function(){
                 if (browser.isPlatform('mac')) {
                     this.innerHTML = "Cmd+Alt+";
@@ -53,27 +57,39 @@
                 }
             });            
             
-            $('#visible_hotkey').val(store.get('hotkey_visible')||'V');
-            $('#area_hotkey').val(store.get('hotkey_region')||'R');
-            $('#entire_hotkey').val(store.get('hotkey_full')||'H');
-
-            $('.options').css({ 'visibility': 'visible' });
-
-            $('#submit').bind('click', function(){
-                this.innerHTML = 'Saving...';
-
-                var data = $('form').serializeArray();
-
-                for (var i=0; i<data.length; i++) {
-                    store.set(data[i].name, data[i].value);                    
-                }
-
-                browser.postMessage({ method: 'updateSettings', global: true });
-
-                setTimeout(function(){
-                    window.close();
-                }, 100);
+            browser.onReady(function() {
+                console.log('ready');
             });
+
+            browser.addMessageListener(function() {
+            });
+
+            browser.postMessage({ 
+                method: 'getSettings' 
+            }, null,
+            function(msg){
+                initOptions(msg.response.settings);
+            });
+
+            
+            function initOptions(storage) {
+                $('#visible_hotkey').val(storage.shortcuts.visible.key);
+                $('#entire_hotkey').val(storage.shortcuts.entire.key);
+
+                $('.options').css({ 'visibility': 'visible' });
+
+                $('#visible_hotkey, #entire_hotkey').bind('keyup', function(){
+                    var data = $('form').serializeArray();
+
+                    var settings = {};
+
+                    for (var i=0; i<data.length; i++) {
+                        settings[data[i].name] = data[i].value; 
+                    }
+
+                    browser.postMessage({ method: 'updateSettings', settings: settings });
+                });
+            }
         </script>
     </body>
 </html>

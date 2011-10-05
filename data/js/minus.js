@@ -94,6 +94,8 @@
 
         xhr.onreadystatechange = function(){
             if (xhr.readyState == 4) {
+                                
+                console.log(url, xhr.status. xhr);
 
                 // Parse response if it contains JSON string
                 var response = xhr.responseText[0] === '{' ? (function(){
@@ -103,7 +105,6 @@
                                                              }()) :
                                                              xhr.responseText;
 
-                console.log(xhr.status, response);
                 if (xhr.status == 200) {
                     (options.onSuccess || emptyFunc)(response, xhr);
                 } else {

@@ -67,7 +67,7 @@
     function initContextMenu() { 
         if (browser.isChrome || browser.isFirefox) {
             browser.contextMenus.create({
-                "title": "Upload to Minus", 
+                "title": "Upload to min.us", 
                 "onclick" : createGalleryClick, 
                 "contexts":["image"]
             });
@@ -264,6 +264,12 @@
     }
 
     function updateSettings(receiver) {
+        if (store.get('icon_type') == 'bw') {
+            browser.toolbarItem.setIcon({ path: "images/logo_small_bw.png" });
+        } else {
+            browser.toolbarItem.setIcon({ path: "images/logo_small.png" });
+        }
+
         var settings = {};
         settings[store.get('hotkey_visible')||'V'] = 'visible';
         settings[store.get('hotkey_region')||'R'] = 'region';        

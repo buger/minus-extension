@@ -130,14 +130,9 @@
         if (msg.method == "screenshotComplete") {
             updateTimeline();
         } else {
-            updateUser();
+            //updateUser();
         }
     });
-
-    browser.onReady(function(){
-      
-    });
-
 
     $('#take_screenshot').live('click', function(){
         var parent = $(this).parent();
@@ -189,7 +184,7 @@
         var form_data = $form.serializeArray();
 
         Minus.oauthToken(form_data[0].value, form_data[1].value, 
-            function(resp) {
+            function(resp) {                
                 if (resp.error) {
                     $('#signin .error').html('Wrong user/password combination.');
                 } else {
@@ -249,8 +244,6 @@
         var user = window.store.get('username');
         var token = window.store.get('access_token');        
         var skip_loader = window.store.get('last_view');
-
-        console.log(user, token);
         
         if (token && user) { 
             Minus.setToken(token);
@@ -261,9 +254,8 @@
                         function(refresh_resp) {
                             if (refresh_resp.error) {
                                 $('body').css({ 'width': '542px' });
-                                $('#signin').show();
-                                
                                 $('#main_content').hide();
+                                $('#signin').show();
                             } else {
                                 console.log(refresh_resp);
 
@@ -282,9 +274,8 @@
             $('#user').attr('href','http://minus.com/'+user);
         } else {
             $('body').css({ 'width': '542px' });            
-            $('#signin').show();
-                                
             $('#main_content').hide();
+            $('#signin').show();
         }
     }
 
@@ -331,8 +322,9 @@
             }
         });
     }
+    
 
-    $(document).ready(function() {    
+    browser.onReady(function() {    
         setTimeout(updateUI, 0);
     });
 

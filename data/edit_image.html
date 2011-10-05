@@ -225,14 +225,11 @@
         
         <script src="js/jquery.min.js"></script>
         <script src="js/chosen.jquery.min.js"></script>
-        <script src="js/browser_api.js"></script>
         <script src="js/minus.js?1"></script>
         <script src="js/store.js?1"></script>
+        <script src="js/browser_api.js?1"></script>
         
         <script>
-            Minus.setToken(window.store.get('access_token'));
-            Minus.setUser(window.store.get('username'));
-
             $('#gallery_list').chosen();
 
             $('#new_folder_form').bind('submit', function() {
@@ -275,11 +272,7 @@
 
                 $(this).html('0% uploaded');
                 
-                try {
-                    var title = decodeURIComponent(queryParam('title'));
-                } catch(e) {
-                    var title = queryParam('title');
-                }
+                var title = capture_data.tabtitle;
 
                 try {
                     var canvas = $('canvas')[0];
@@ -288,7 +281,14 @@
                     var imageData = $('#image_for_edit')[0].src;
                 }
 
-                browser.postMessage({ method: "uploadScreenshot", imageData:canvas.toDataURL(), title:title, gallery:$('#gallery_list').val() });
+                browser.postMessage({ 
+                    method: "uploadScreenshot", 
+                    imageData:canvas.toDataURL(), 
+                    title:title, 
+                    gallery:$('#gallery_list').val() 
+                }, null, function(){
+                    window.close();
+                });
             });
 
 
@@ -330,21 +330,34 @@
                 });
             }
 
-            loadGalleries();
-            
+            browser.onReady(function() {
+                Minus.setToken(window.store.get('access_token'));            
+                Minus.setUser(window.store.get('username'));
+                
+                loadGalleries();
+            });
         </script>
 
-        <script type="text/javascript">            
-            var bg_page = chrome.extension.getBackgroundPage();
-            
-            document.getElementById('image_for_edit').src = bg_page.latest_screenshot
+        <script type="text/javascript"> 
+            console.log('hello!');
 
+            var capture_data;
+
+            browser.postMessage({ 
+                method: 'getCaptureData'
+            }, null, function(msg) {            
+                console.log('received response', msg);
+
+                capture_data = msg.response;
+
+                document.getElementById('image_for_edit').src = capture_data.data;
+            });
 
             var _featherLoaded = false; 
              
             Feather_APIKey = '82b5cf913';
             Feather_NoCloseButton = true;
-            Feather_Theme = 'silver'; 
+            Feather_Theme = 'minus'; 
             Feather_EditOptions = 'all'; 
             Feather_OpenType = 'float';
             Feather_MaxSize = window.outerWidth;
@@ -358,13 +371,15 @@
                 aviaryeditor_close(); 
             } 
              
-            Feather_OnLoad = function() { 
+            Feather_OnLoad = function() {                
                 _featherLoaded = true; 
 
                 launchEditor('image_for_edit')
             } 
 
             Feather_OnLaunchComplete = function(){
+                console.log('OnLaunchComplete');
+
                 var img = document.getElementById('image_for_edit'); 
 
                 f = AV.controlsWidgetInstance.getScaledDims(img.width, img.height);
@@ -378,14 +393,11 @@
                 AV.controlsWidgetInstance.showWaitThrobber(!1);
                 AV.controlsWidgetInstance.loaderPhase = 2
                 
-                // if scroll visible move controls to visible part of the page
-                if (document.body.clientWidth < document.body.scrollWidth) {
-                    var controls = $("#avpw_controls");
-                    controls.css({
-                        'left': (window.outerWidth - controls.width() - 190)+'px',
-                        'top':  (window.innerHeight - controls.height() - 50)+'px' 
-                    });
-                }
+                var controls = $("#avpw_controls");
+                controls.css({
+                    'left': (window.outerWidth - controls.width() - 190)+'px',
+                    'top':  (window.innerHeight - controls.height() - 50)+'px' 
+                });
 
                 $('#avpw_header a')
                     .attr('href', "http://www.aviary.com/html5")
@@ -411,10 +423,6 @@
                     console.log(msg);
                     $('#upload').html(parseInt(msg.progress)+"% uploaded");
                 }
-            });
-
-            browser.onReady(function(){
-              
             });
         </script>
     </body>
