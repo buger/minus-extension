@@ -286,7 +286,7 @@
         var settings = {};
         settings[store.get('hotkey_visible')||'V'] = 'visible';
         settings[store.get('hotkey_region')||'R'] = 'region';        
-        settings[store.get('hotkey_full')||'H'] = 'full';        
+        settings[store.get('hotkey_ffll')||'H'] = 'full';        
 
         console.log(receiver);
     
@@ -412,6 +412,32 @@
                         tabtitle: window.latest_title
                     }
                 });
+                break;
+            
+            case 'getSettings': 
+                sendResponse({
+                    response: {
+                        settings: {
+                            shortcuts: {
+                                visible: { key: (store.get('hotkey_visible')||'V') },
+
+                                region: { key: (store.get('hotkey_region')||'R') },
+
+                                entire: { key: (store.get('hotkey_full')||'H') }
+                            }
+                        }
+                    }        
+                });
+                break;
+
+            case 'updateHotkeys':
+                console.log('setting key', msg.settings.hotkey_region);
+
+                store.set('hotkey_visible', msg.settings.hotkey_visible);
+                store.set('hotkey_region', msg.settings.hotkey_region);
+                store.set('hotkey_full', msg.settings.hotkey_entire);
+
+                updateSettings();
                 break;
 
             case '_ajax':

@@ -68,6 +68,7 @@
                 method: 'getSettings' 
             }, null,
             function(msg){
+                console.log(msg);
                 initOptions(msg.response.settings);
             });
 
@@ -75,10 +76,11 @@
             function initOptions(storage) {
                 $('#visible_hotkey').val(storage.shortcuts.visible.key);
                 $('#entire_hotkey').val(storage.shortcuts.entire.key);
+                $('#area_hotkey').val(storage.shortcuts.region.key);
 
                 $('.options').css({ 'visibility': 'visible' });
 
-                $('#visible_hotkey, #entire_hotkey').bind('keyup', function(){
+                $('#visible_hotkey, #entire_hotkey, #area_hotkey').bind('keyup', function(){
                     var data = $('form').serializeArray();
 
                     var settings = {};
@@ -87,7 +89,9 @@
                         settings[data[i].name] = data[i].value; 
                     }
 
-                    browser.postMessage({ method: 'updateSettings', settings: settings });
+                    console.log(settings);
+
+                    browser.postMessage({ method: 'updateHotkeys', settings: settings });
                 });
             }
         </script>
