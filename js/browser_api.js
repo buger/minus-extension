@@ -62,14 +62,51 @@
         return r;
     }
 
-    if (navigator.userAgent.match('Firefox') != undefined) {
-        console.log(navigator.userAgent); 
-        window.console = {
-            log: function() {
-                browser.postMessage({ _api: true, method: "log", message: joinArgs(arguments) });
+    function extend(destination, source) {
+        for (var property in source) {
+            if (source.hasOwnProperty(property)) {
+                destination[property] = source[property];
             }
         }
+        return destination;
     }
+
+    var FFStore = {
+        synced:false,
+
+        data: {},
+       
+        sync: function() {
+            browser.broadcastMessage({ _api: true, method: 'updateStorage', data: FFStore.data },
+                function(msg) {
+                    extend(FFStore.data, msg.response);
+
+                    FFStore.synced = true;
+                    
+                    console.log('Synced!', FFStore.data);
+                }
+            )
+        },
+
+        set: function(key, value) {
+            FFStore.data[key] = value;
+
+            FFStore.sync();
+        },
+
+        get: function(key) {
+            console.log("Getting key", key);
+            return FFStore.data[key];
+        },
+
+        remove: function(key) {
+            FFStore.data[key] = null;
+
+            FFStore.sync();
+        }
+    }
+
+
 
     var browser = {
         isChrome: typeof(window.chrome) === "object",
@@ -236,11 +273,17 @@
                     browser._onReadyCallback();
                 }
             } else {             
-                browser._isNetworkInitialized = true;
-
+                browser._isNetworkInitialized = true;                
                 if (browser._onReadyCallback) {
                     console.log("Calling onReady callback", browser._isNetworkInitialized);
-                    browser._onReadyCallback();
+                    
+                    if (FFStore.synced) {
+                        browser._onReadyCallback();
+                    } else {
+                        setTimeout(function() {
+                            browser.onReady();
+                        }, 50);
+                    }
                 }
             }
         },
@@ -310,7 +353,7 @@
             } else if (browser.isSafari) {
                 browser._s_addMessageListener(listener);
             } else if (browser.isFirefox) {
-                browser._f_addMessageListener(listener);
+                browser._ff_addMessageListener(listener);
             }
         },
         
@@ -346,10 +389,10 @@
 
         _listener_initialized: false,
         
-        _f_message_in: null,
-        _f_message_out: null,
+        _ff_message_in: null,
+        _ff_message_out: null,
 
-        _f_addMessageListener: function(listener) {
+        _ff_addMessageListener: function(listener) {
             browser._listeners.push(listener);
             
             if (browser._listener_initialized) {
@@ -359,10 +402,16 @@
             }
                         
             function waitForDispatcher() {
-                browser._f_message_bridge = document.getElementById('ff_message_bridge');
+                browser._ff_message_bridge = document.getElementById('ff_message_bridge');
 
-                if (!browser._f_message_bridge)
-                    return setTimeout(waitForDispatcher, 50);
+                if (!browser._ff_message_bridge) {
+                     var el = document.createElement('div');
+                     el.id = 'ff_message_bridge';
+                     el.style.display = 'none';
+                     document.body.appendChild(el);
+                    
+                     browser._ff_message_bridge = el;
+                }
 
                 if (document.body.className.match(/background/)) {
                     browser.page_type = "background";
@@ -386,16 +435,18 @@
                         }
                     }, false);
                 }
+                
+                FFStore.sync();
 
                 setInterval(function(){
-                    var messages = browser._f_message_bridge.querySelectorAll('.to_page');    
+                    var messages = browser._ff_message_bridge.querySelectorAll('.to_page');    
                     var length = messages.length;
 
                     if (length > 0) {
                         for(var i=0; i<length; i++) {
                             var msg = messages[i].innerHTML;                            
                             msg = msg[0] == '{' ? JSON.parse(msg) : msg;
-                            browser._f_message_bridge.removeChild(messages[i]);
+                            browser._ff_message_bridge.removeChild(messages[i]);
 
                             browser._listeners.forEach(function(fn) {
                                 fn(msg, browser);                
@@ -409,12 +460,20 @@
                 console.log("Document:", document.body.className, browser.page_type);
         
                 if (browser.page_type == "popup") {
+                    
                     var l = function (evt) {
+                        if (browser._width  === document.body.offsetWidth &&
+                            browser._height === document.body.offsetHeight)
+                            return setTimeout(l, 500);
+
+                        browser._width = document.body.offsetWidth;
+                        browser._height = document.body.offsetHeight;
+
                         browser.postMessage({
                             _api: true,
                             method: 'popupResize', 
-                            width: document.body.offsetWidth,
-                            height: document.body.offsetHeight
+                            width: browser._width,
+                            height: browser._height
                         });
                         
                         setTimeout(l, 500);
@@ -645,11 +704,11 @@
                     safari.self.tab.dispatchMessage("_message", message);
                 }
             } else if (browser.isFirefox) {
-                if (!browser._f_message_bridge)
-                    return setTimeout(function(){ browser.broadcastMessage(message) }, 50);
+                if (!browser._ff_message_bridge)
+                    return setTimeout(function(){ browser.broadcastMessage(message, callback) }, 50);
                 
                 if (callback) {
-                    console.log("Adding message listener", message);
+                    console.log("Adding message listener", message, callback);
 
                     if (!message.event_listener)
                         message.reply = true;
@@ -672,7 +731,7 @@
                 var _m = document.createElement('textarea');
                 _m.className = 'from_page';
                 _m.innerHTML = typeof(message) == "string" ? message : JSON.stringify(message);
-                browser._f_message_bridge.appendChild(_m);                                
+                browser._ff_message_bridge.appendChild(_m);                                
             }
         },
 
@@ -807,11 +866,13 @@
             this.async = async;
         }
 
-        this.send = function(data) {            
+        this.send = function(data) {
             var self = this;
 
             browser.postMessage({ 
                 method: '_ajax',
+
+                _api: true,
 
                 httpOptions: {
                     method: this.method,
@@ -819,10 +880,15 @@
                     async: this.async,
                     binary: this.binary,
                     headers: this.requestHeaders,
-                    mime_type: this.mime_type
+                    mime_type: this.mime_type,
+                    data: data
                 }
             }, null, 
                 function(resp) {
+                    resp = resp.response;
+
+                    console.log("Ajax response", resp.response);
+
                     self.readyState = 4;
                     self.responseText = resp.responseText;
                     self.responseHeaders = resp.responseHeaders;
@@ -848,10 +914,8 @@
         this.abort = function() {                   
         }
 
-        this.setRequestHeader = function(headers) {
-            for (header in headers) {
-                this.requestHeaders[header] = headers[header];
-            }
+        this.setRequestHeader = function(header, value) {
+            this.requestHeaders[header] = value;
         }
         
         this.getResponseHeader = function(header) {
@@ -869,8 +933,19 @@
         }
     }
 
-    if (!browser.isBackgroundPage) {
-        window.XMLHttpRequest = FakeXMLHttpRequest;
+    
+    window.FFStore = FFStore;
+
+    if (browser.isFirefox) {
+        window.store = FFStore;    
+
+        if (!browser.isBackgroundPage) {
+            window.XMLHttpRequest = FakeXMLHttpRequest;
+        }        
     }
 
+
+    if (browser.isFirefox) {
+        document.body.className += " firefox";
+    }
 }(window));                    
