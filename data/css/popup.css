@@ -407,6 +407,10 @@ body {
 }
 
 #my_galleries .items.dot {
+    display: inline-block;
+    width: 6px;
+    height: 16px;
+    background: url(../images/don.png) no-repeat center;
 }
 
 #take_screenshot {
@@ -612,4 +616,3 @@ a.button:hover {
 .firefox #header li[data-screenshot-type='region'] {
     display: none;
 }
-

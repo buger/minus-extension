@@ -8,7 +8,7 @@
         <script id="galleries_template" type="text/x-jquery-tmpl"> 
             {{each galleries}}
             <li {{if $value.id == 'Unavailable'}}class="not_editable"{{/if}}>
-                <table cellspacing="0" cellpadding="0" width="100%">
+                <table cellspacing="0" cellpadding="0" width="100%" height="100%">
                     <tr>                    
                         <td width="95px" class="preview" rowspan="3" valign="top" align="center">
                             <a target='_blank' href='http://minus.com/m${$value.id}'>
@@ -46,7 +46,7 @@
                                 empty
                             {{/if}}
                             </span>
-                            <span class="items dot">·</span>
+                            <span class="items dot">&nbsp;</span>
                             <span class="items clicks">                    
                             {{if $value.view_count > 0}}
                                 {{if $value.view_count == 1 }}
@@ -58,7 +58,7 @@
                                 0 views
                             {{/if}}
                             </span>
-                            <span class="items dot">·</span>
+                            <span class="items dot">&nbsp;</span>
                             <span class="items date" title="${$value.time_ago}"></span>
                         </td>
                     </tr>
