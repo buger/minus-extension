@@ -129,7 +129,7 @@
     function uploadItem(binaryData, gallery_id, title, onProgress){
         anim.start();
 
-        Minus.uploadItem(gallery_id, title.slice(0,50)+".png", "image/png", binaryData, 
+        Minus.uploadItem(gallery_id, title.slice(0,50), "image/png", binaryData, 
             function(resp){
                 anim.stop();
 

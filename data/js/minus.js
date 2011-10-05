@@ -195,7 +195,7 @@
     }
 
     Minus.uploadItem = function(id, filename, mime, binaryData, callback, onProgress) {
-        filename = encodeURIComponent(filename.replace(/^\./,''));        
+        filename = escape(filename.replace(/^\./,'Untitled')) + ".png";
     
         var boundary = '---------------------------';
         boundary += Math.floor(Math.random()*32768);
@@ -208,13 +208,15 @@
         data += binaryData;
         data += "\r\n" + '--' + boundary + "\r\n";
 
-        data += 'Content-Disposition: form-data; name="caption"';
-        data += "\r\n";
+        data += 'Content-Disposition: form-data; name="caption"\r\n';        
+        data += 'Content-Transfer-Encoding: quoted-printable\r\n';
+        data += 'Content-Type: text/plain; charset=UTF-8\r\n'
         data += "\r\n";
         data += filename;
         data += "\r\n" + '--' + boundary + "\r\n";
-        data += 'Content-Disposition: form-data; name="filename"';
-        data += "\r\n";
+        data += 'Content-Disposition: form-data; name="filename"\r\n';
+        data += 'Content-Transfer-Encoding: quoted-printable\r\n';
+        data += 'Content-Type: text/plain; charset=UTF-8\r\n';
         data += "\r\n";
         data += filename
         data += "\r\n" + '--' + boundary + '--'
