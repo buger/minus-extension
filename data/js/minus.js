@@ -95,7 +95,7 @@
         xhr.onreadystatechange = function(){
             if (xhr.readyState == 4) {
                                 
-                console.log(url, xhr.status. xhr);
+                console.log(url, xhr.status, xhr);
 
                 // Parse response if it contains JSON string
                 var response = xhr.responseText[0] === '{' ? (function(){
@@ -196,9 +196,7 @@
 
     Minus.uploadItem = function(id, filename, mime, binaryData, callback, onProgress) {
         filename = encodeURIComponent(filename.replace(/^\./,''));        
-
-        var params = hashToQueryString({ caption:filename, filename:filename });        
-
+    
         var boundary = '---------------------------';
         boundary += Math.floor(Math.random()*32768);
         boundary += Math.floor(Math.random()*32768);
@@ -222,7 +220,7 @@
         data += "\r\n" + '--' + boundary + '--'
         data += "\r\n";
 
-        this.callMethod('folders/'+id+'/files?'+params, {
+        this.callMethod('folders/'+id+'/files', {
             method: "POST",
             headers: { 'Content-Type': 'multipart/form-data; boundary=' + boundary },
             binaryData: data,            
@@ -306,6 +304,8 @@
             onSuccess: function(resp) {
                 for (var i=0; i<resp.results.length; i++) {
                     resp.results[i].creator_name = resp.results[i].creator.match(/\w+$/)[0];
+
+                    resp.results[i].time_ago = new Date(new Date() - resp.results[i].last_updated_ago*1000).toISOString();
                 }
 
                 callback(resp);
@@ -357,8 +357,8 @@
             'client_id': API_KEY,
             'client_secret': API_SECRET,
             'scope': 'read_all modify_all upload_new',
-            'username': username,
-            'password': password
+            'username': username.trim(),
+            'password': password.trim()
         }
 
         new Ajax("https://minus.com/oauth/token", {

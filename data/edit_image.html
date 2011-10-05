@@ -339,8 +339,6 @@
         </script>
 
         <script type="text/javascript"> 
-            console.log('hello!');
-
             var capture_data;
 
             browser.postMessage({ 
@@ -349,6 +347,8 @@
                 console.log('received response', msg);
 
                 capture_data = msg.response;
+
+                console.log('image loaded')
 
                 document.getElementById('image_for_edit').src = capture_data.data;
             });
@@ -363,6 +363,7 @@
             Feather_MaxSize = window.outerWidth;
             Feather_MaxDisplaySize = 10000;
             Feather_MaxSize = 10000;
+            Feather_UseServerFilters = true;
             Feather_CropSizes = '320x240,640x480,800x600,1280x1024'; 
                   
             Feather_OnSave = function(id, url) { 
@@ -371,28 +372,15 @@
                 aviaryeditor_close(); 
             } 
              
-            Feather_OnLoad = function() {                
-                _featherLoaded = true; 
+            Feather_OnLoad = function() {
+                console.log('onload')                
+
+                _featherLoaded = true;                 
 
                 launchEditor('image_for_edit')
             } 
 
             Feather_OnLaunchComplete = function(){
-                console.log('OnLaunchComplete');
-
-                var img = document.getElementById('image_for_edit'); 
-
-                f = AV.controlsWidgetInstance.getScaledDims(img.width, img.height);
-                img.width = f.width;
-                img.height = f.height;
-                AV.paintWidgetInstance.setDimensions(img.width, img.height);
-                AV.paintWidgetInstance.setBackground(img);
-                avpw$(AV.paintWidgetInstance.canvas).insertBefore("#avpw_temp_loading_image");
-                avpw$("#avpw_temp_loading_image").remove();
-                AV.tempLoadingImageSrc = img.src;
-                AV.controlsWidgetInstance.showWaitThrobber(!1);
-                AV.controlsWidgetInstance.loaderPhase = 2
-                
                 var controls = $("#avpw_controls");
                 controls.css({
                     'left': (window.outerWidth - controls.width() - 190)+'px',
@@ -409,13 +397,15 @@
             function launchEditor(imageid) { 
                 if (_featherLoaded) { 
                     var img = document.getElementById(imageid); 
-                    aviaryeditor(imageid, "");            
+                    aviaryeditor(imageid);
                 } 
             } 
         </script> 
-        <script type="text/javascript" src="http://feather.aviary.com/js/feather.js"></script>  
+        <script type="text/javascript" src="http://feather.aviary.com/js/feather.js"></script>          
 
         <script>
+            AV.setUpOstrich = function() {}
+
             browser.addMessageListener(function(msg, sender) {
                 if (msg.method == "uploadComplete") {
                     window.close();

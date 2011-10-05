@@ -115,10 +115,22 @@ body {
     width: 102px;
     height: 32px;
     padding: 6px 8px;
+    padding-top: 3px;
     text-align: center;
     font-weight: bold;
     color: #363636;
     font-size: 16px;
+}
+
+#signin .loader {
+    display: none;
+    position: absolute;
+    left: 30px;
+    top: 30px;
+}
+
+#signin.loading .loader {
+    display: block;
 }
 
 #signin form input[type=submit]:hover {
@@ -506,11 +518,11 @@ a.button:hover {
     margin-left: 10px;
 }
 
-#user, #signout {
+#user {
     font-size: 11px;
     font-weight: bold;
     color: #999;
-    margin-right: 18px;
+    margin-right: 0px;
     float: right;    
     padding-top: 3px;
 
@@ -518,21 +530,25 @@ a.button:hover {
 }
 
 #user {
-    text-align: left;
-    margin-left: 80px;
+    text-align: left;    
 }
 
-#user:hover, #signout:hover {
+#user:hover {
     color: #333;
     text-decoration: none;
 }
 
 #signout {
-    position: absolute;
-    right: 5px;
-    bottom: 10px;
+    float: right;    
     font-size: 12px;
     font-weight: normal;
+    opacity: 0.5;
+    padding-top: 4px;
+    margin-right: 18px;
+}
+
+#signout:hover {
+    opacity: 1;
 }
 
 #loader {

@@ -64,30 +64,49 @@
         listener({ method: 'takeScreenshot', captureType: captureType });
     }
 
+    function listenForUsernameChange() {
+        if (window.last_username != window.store.get('username')) {
+            initContextMenu();
+        }        
+
+        window.last_username = window.store.get('username');
+    }
+
+    setInterval(listenForUsernameChange, 5000);
+
     function initContextMenu() { 
         if (browser.isChrome || browser.isFirefox) {
-            browser.contextMenus.create({
-                "title": "Upload to min.us", 
-                "onclick" : createGalleryClick, 
-                "contexts":["image"]
-            });
+            chrome.contextMenus.removeAll(function(){
+                if (window.store.get('username')) {
+                    browser.contextMenus.create({
+                        "title": "Upload to Minus", 
+                        "onclick" : createGalleryClick, 
+                        "contexts":["image"]
+                    });
+                
+                    browser.contextMenus.create({
+                        "title": "Capture Visible Part of Page", 
+                        "onclick" : function(){ captureFromMenu('visible') }
+                    });
 
-            browser.contextMenus.create({
-                "title": "Capture Visible Part of Page", 
-                "onclick" : function(){ captureFromMenu('visible') }
-            });
-
-            browser.contextMenus.create({
-                "title": "Capture Selected Area", 
-                "onclick" : function(){ captureFromMenu('region') },
-                "documentUrlPatterns": ["http://*/*"]
-            });
-            
-            browser.contextMenus.create({
-                "title": "Capture Entire Page", 
-                "onclick" : function(){ captureFromMenu('full') },
-                "documentUrlPatterns": ["http://*/*"]
-            });
+                    browser.contextMenus.create({
+                        "title": "Capture Selected Area", 
+                        "onclick" : function(){ captureFromMenu('region') },
+                        "documentUrlPatterns": ["http://*/*"]
+                    });
+                    
+                    browser.contextMenus.create({
+                        "title": "Capture Entire Page", 
+                        "onclick" : function(){ captureFromMenu('full') },
+                        "documentUrlPatterns": ["http://*/*"]
+                    });
+                } else {
+                    browser.contextMenus.create({
+                        "title": "Not logged to Minus", 
+                        "onclick" : function(){}
+                    });                    
+                }                                
+            });            
 
 
         } else if(browser.isSafari) {
@@ -264,12 +283,6 @@
     }
 
     function updateSettings(receiver) {
-        if (store.get('icon_type') == 'bw') {
-            browser.toolbarItem.setIcon({ path: "images/logo_small_bw.png" });
-        } else {
-            browser.toolbarItem.setIcon({ path: "images/logo_small.png" });
-        }
-
         var settings = {};
         settings[store.get('hotkey_visible')||'V'] = 'visible';
         settings[store.get('hotkey_region')||'R'] = 'region';        
@@ -288,6 +301,8 @@
                 anim.start();
 
                 browser.tabs.getSelected(null, function(tab) {
+                    window.latest_title = tab.title;
+
                     switch (msg.captureType) {
                         case 'visible':
                             captureVisible(function(dataUrl){
@@ -386,6 +401,17 @@
                     }
                 );
 
+                break;
+
+            case 'getCaptureData':
+                console.log('getting capture data', sendResponse);
+
+                sendResponse({
+                    response: {
+                        data: window.latest_screenshot,
+                        tabtitle: window.latest_title
+                    }
+                });
                 break;
 
             case '_ajax':
