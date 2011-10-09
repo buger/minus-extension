@@ -410,8 +410,10 @@
                 if (msg.method == "uploadComplete") {
                     window.close();
                 } else if (msg.method == "uploadProgress") {
-                    console.log(msg);
-                    $('#upload').html(parseInt(msg.progress)+"% uploaded");
+                    if (browser.isFirefox)
+                        $('#upload').html("Uploading...");
+                    else
+                        $('#upload').html(parseInt(msg.progress)+"% uploaded");
                 }
             });
         </script>
