@@ -266,6 +266,7 @@
 
             Minus.activeUser(function(resp) {
                 if (resp.invalid_token) {
+                    
                     Minus.refreshToken(window.store.get('refresh_token'),
                         function(refresh_resp) {
                             if (refresh_resp.error) {

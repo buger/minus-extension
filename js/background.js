@@ -57,7 +57,7 @@
             // Gif file editing is forbided
             if (store.get('edit_image') && headers.mime != "image/gif") {
                 anim.stop();
-                
+
                 window.latest_screenshot = data.srcUrl;        
                 browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+data.srcUrl) });
             } else {
@@ -469,6 +469,26 @@
                 });
         }
     }
+
+
+    function refreshToken(){                        
+        console.log('adada');
+
+        if (!window.store.get('refresh_token')) return;
+
+        console.log('refreshing token');
+
+        Minus.refreshToken(window.store.get('refresh_token'),
+            function(resp) {
+                window.store.set('access_token', resp.access_token);
+                window.store.set('refresh_token', resp.refresh_token);
+            }
+        );
+
+        setTimeout(refreshToken, 1000*60*30);
+    }
+
+    refreshToken();
 
     browser.addMessageListener(listener);
 

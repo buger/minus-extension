@@ -387,7 +387,7 @@
             'client_id': API_KEY,
             'client_secret': API_SECRET,
             'refresh_token': refresh_token,
-            'scope': 'modify_all'
+            'scope': 'read_all modify_all upload_new'
         }
 
         new Ajax("https://minus.com/oauth/token", {
