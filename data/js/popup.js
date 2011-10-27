@@ -21,8 +21,8 @@
         $('#timeline a.active').removeClass('active');
         $('#timeline a[data-timeline='+timeline_type+']').addClass('active');
         
-        if (!skip_loader) 
-            $('#my_galleries').html("<li class='loader'></li>");
+
+        $('#my_galleries').prepend("<li class='loader'></li>");
 
         reinitializePane();
 
@@ -134,8 +134,8 @@
 
         if (msg.method == "screenshotComplete") {
             updateTimeline();
-        } else {
-            //updateUser();
+        } else if (msg.method == "popupOpen") {
+            updateUser();
         }
     });
 

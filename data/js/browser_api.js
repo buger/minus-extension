@@ -447,23 +447,19 @@
                 
                 FFStore.sync();
 
-                setInterval(function(){
-                    var messages = browser._ff_message_bridge.querySelectorAll('.to_page');    
-                    var length = messages.length;
 
-                    if (length > 0) {
-                        for(var i=0; i<length; i++) {
-                            var msg = messages[i].innerHTML;                            
-                            msg = msg[0] == '{' ? JSON.parse(msg) : msg;
-                            browser._ff_message_bridge.removeChild(messages[i]);
+                window.addEventListener("message", function(event) {
 
-                            browser._listeners.forEach(function(fn) {
-                                fn(msg, browser);                
-                            })
-                        }
-                    }
-                }, 50);
 
+                    var msg = JSON.parse(window.decodeURIComponent(event.data));
+
+                    console.log("received message", msg);
+                    
+                    browser._listeners.forEach(function(fn) {
+                        fn(msg, browser);                
+                    });  
+                });
+            
                 browser.onReady();
 
                 console.log("Document:", document.body.className, browser.page_type);
@@ -899,8 +895,6 @@
             }, null, 
                 function(resp) {
                     resp = resp.response;
-
-                    console.log("Ajax response", resp.response);
 
                     self.readyState = 4;
                     self.responseText = resp.responseText;

@@ -93,10 +93,8 @@
         xhr.open(options.method || "GET", url, true);  
 
         xhr.onreadystatechange = function(){
-            if (xhr.readyState == 4) {
-                                
-                console.log(url, xhr.status, xhr);
-
+            if (xhr.readyState == 4) {  
+                xhr.responseText = xhr.responseText || "";                              
                 // Parse response if it contains JSON string
                 var response = xhr.responseText[0] === '{' ? (function(){
                                                                  return window.JSON && window.JSON.parse ?

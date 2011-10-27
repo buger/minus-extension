@@ -1,14 +1,10 @@
-self.on('message', function(msg) {    
-    var bridge = document.getElementById('ff_message_bridge');
-
-    if (!bridge) return;
-    
-    var _m = document.createElement('textarea');
-    _m.className = 'to_page';
-
+self.on('message', function(msg) {            
     var message = typeof(msg.message) == "string" ? msg.message : JSON.stringify(msg.message);
-    _m.innerHTML = message;
-    bridge.appendChild(_m);
+
+
+    console.log('sending message:', message);
+
+    document.defaultView.postMessage(window.encodeURIComponent(message), "*");
 });
 
 self.postMessage({ method: "bridge_init" });
