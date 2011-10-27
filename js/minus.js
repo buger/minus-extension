@@ -195,7 +195,14 @@
     }
 
     Minus.uploadItem = function(id, filename, mime, binaryData, callback, onProgress) {
-        filename = escape(filename.replace(/^\./,'Untitled')) + ".png";
+                        
+        filename = filename.replace(/\?.*/, '');
+        
+        if (!filename.match(/\.(gif|jpg|png)/)) {
+            filename = filename + "." + mime.split('/')[1];
+        }
+
+        filename = filename.replace(/^\./,'Untitled');
     
         var boundary = '---------------------------';
         boundary += Math.floor(Math.random()*32768);
@@ -259,40 +266,36 @@
       return file_data; 
     }
 
-    Minus.uploadItemFromURL = function(url, editor_id, callback, progress) {
-        if (!callback)
-            callback = emptyFunc;
-
+    Minus.getFileHeader = function(url, callback) {
         var head = new Ajax(url, {
             method: "HEAD",
 
             onSuccess: function() {
-                var size = parseInt(head.getResponseHeader('Content-Length'));
-                var filename = url.substring(url.lastIndexOf("/")+1);
-                var mime = head.getResponseHeader("Content-Type");
+                callback({
+                    size: parseInt(head.getResponseHeader('Content-Length')),                  
+                    mime: head.getResponseHeader("Content-Type")
+                });
+            }
+        });
+    }
 
-                // Maximum file size
-                if (size > 10000000) {
-                    console.error("File too large");
+    Minus.uploadItemFromURL = function(url, editor_id, callback, progress) {
+        if (!callback)
+            callback = emptyFunc;
+        
+        var filename = url.substring(url.lastIndexOf("/")+1);
 
-                    callback({ error: "file_size_error", message: "Maximum allowed file size is 10 mb." });
-                } else {
-                    if (navigator.userAgent.match('Firefox') != undefined) {
-                        var bData = getImageFromURL(url);
-                        Minus.uploadItem(editor_id, filename, mime, bData, callback);
-                    } else {
-                        var data = new Ajax(url, {
-                            mime_type: 'text/plain; charset=x-user-defined',
-                            onSuccess: function() {
-                                Minus.uploadItem(editor_id, filename, mime, data.responseText, callback, progress);
-                            }
-                        });
+        Minus.getFileHeader(url, function(headers){                           
+            if (navigator.userAgent.match('Firefox') != undefined) {
+                var bData = getImageFromURL(url);
+                Minus.uploadItem(editor_id, filename, headers.mime, bData, callback);
+            } else {
+                var data = new Ajax(url, {
+                    mime_type: 'text/plain; charset=x-user-defined',
+                    onSuccess: function() {
+                        Minus.uploadItem(editor_id, filename, headers.mime, data.responseText, callback, progress);
                     }
-                }
-            }, 
-
-            onError: function() {
-                callback({ error: "file_download_error", message: "Can't download file" });
+                });
             }
         });
     }

@@ -51,13 +51,19 @@
     browser.popupWidth = 400;
 
     function createGalleryClick(data) {
-        // Gif file editing is forbided
-        if (store.get('edit_image') && !data.srcUrl.match("\.gif")) {
-            window.latest_screenshot = data.srcUrl;        
-            browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+data.srcUrl) });
-        } else {
-            uploadScreenshot(data.srcUrl, '', data.srcUrl);
-        }
+        anim.start();
+
+        Minus.getFileHeader(data.srcUrl, function(headers){
+            // Gif file editing is forbided
+            if (store.get('edit_image') && headers.mime != "image/gif") {
+                anim.stop();
+                
+                window.latest_screenshot = data.srcUrl;        
+                browser.tabs.create({ url: browser.extension.getURL('/edit_image.html?title='+data.srcUrl) });
+            } else {
+                uploadScreenshot(data.srcUrl, '', data.srcUrl);
+            }
+        });
     }
 
     function captureFromMenu(captureType) {
