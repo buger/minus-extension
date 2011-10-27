@@ -18,6 +18,7 @@ a:hover {
 
 body {
     width: 380px;
+    height: auto;
     margin: 0;
     font-family: helvetica, arial;
     font-size: 14px;
@@ -29,7 +30,6 @@ body {
 #signin {
     width: 542px; 
     height: 330px !important;
-    height: 100%; 
     background: white; 
     border: 0px solid #ddd;    
     border-top: 1px solid rgba(0,0,0,0);
@@ -115,10 +115,22 @@ body {
     width: 102px;
     height: 32px;
     padding: 6px 8px;
+    padding-top: 3px;
     text-align: center;
     font-weight: bold;
     color: #363636;
     font-size: 16px;
+}
+
+#signin .loader {
+    display: none;
+    position: absolute;
+    left: 30px;
+    top: 30px;
+}
+
+#signin.loading .loader {
+    display: block;
 }
 
 #signin form input[type=submit]:hover {
@@ -296,7 +308,6 @@ body {
     margin: 0;
     height: auto;
     max-height: 380px;
-    min-height: 100px;
     width: 100%;
     overflow-x: hidden;
     
@@ -396,6 +407,10 @@ body {
 }
 
 #my_galleries .items.dot {
+    display: inline-block;
+    width: 6px;
+    height: 16px;
+    background: url(../images/don.png) no-repeat center;
 }
 
 #take_screenshot {
@@ -468,6 +483,7 @@ a.button:hover {
     text-align: center;
 }
 
+
 #footer {
     clear: both;
     height: 25px;
@@ -506,11 +522,11 @@ a.button:hover {
     margin-left: 10px;
 }
 
-#user, #signout {
+#user {
     font-size: 11px;
     font-weight: bold;
     color: #999;
-    margin-right: 18px;
+    margin-right: 0px;
     float: right;    
     padding-top: 3px;
 
@@ -518,21 +534,25 @@ a.button:hover {
 }
 
 #user {
-    text-align: left;
-    margin-left: 80px;
+    text-align: left;    
 }
 
-#user:hover, #signout:hover {
+#user:hover {
     color: #333;
     text-decoration: none;
 }
 
 #signout {
-    position: absolute;
-    right: 5px;
-    bottom: 10px;
+    float: right;    
     font-size: 12px;
     font-weight: normal;
+    opacity: 0.5;
+    padding-top: 4px;
+    margin-right: 18px;
+}
+
+#signout:hover {
+    opacity: 1;
 }
 
 #loader {
@@ -587,3 +607,12 @@ a.button:hover {
     content: "";
 }
 
+
+/********** Firefox css *********/
+.firefox #main_content {
+    padding-bottom: 10px;
+}
+
+.firefox #header li[data-screenshot-type='region'] {
+    display: none;
+}

@@ -8,7 +8,7 @@
         <script id="galleries_template" type="text/x-jquery-tmpl"> 
             {{each galleries}}
             <li {{if $value.id == 'Unavailable'}}class="not_editable"{{/if}}>
-                <table cellspacing="0" cellpadding="0" width="100%">
+                <table cellspacing="0" cellpadding="0" width="100%" height="100%">
                     <tr>                    
                         <td width="95px" class="preview" rowspan="3" valign="top" align="center">
                             <a target='_blank' href='http://minus.com/m${$value.id}'>
@@ -46,7 +46,7 @@
                                 empty
                             {{/if}}
                             </span>
-                            <span class="items dot">·</span>
+                            <span class="items dot">&nbsp;</span>
                             <span class="items clicks">                    
                             {{if $value.view_count > 0}}
                                 {{if $value.view_count == 1 }}
@@ -58,9 +58,8 @@
                                 0 views
                             {{/if}}
                             </span>
-                            <span class="items dot">·</span>
-                            <span class="items date" title="${$value.date_last_updated}"> 
-                            </span>
+                            <span class="items dot">&nbsp;</span>
+                            <span class="items date" title="${$value.time_ago}"></span>
                         </td>
                     </tr>
                 </table>
@@ -68,13 +67,14 @@
             {{/each}}
         </script>
     </head>
-    <body>
+    <body class="popup">
         <div id="signin" style="display: none">
             <div class="logo"> 
             </div>            
             <div class='relative'>
+                <img src="images/loading.gif" alt="" class="loader" />
                 <div class='error'></div>
-                <form class="signin">
+                <form class="signin" autocomplete="off">
                     <h3>Sign In</h3>
                     <input type="text" name="username" placeholder="Username" />
                     <input type="password" name="password" placeholder="Password" /> 
@@ -86,7 +86,7 @@
 
                     <input type="submit" value="Sign In" />
                 </form>
-                <form class="signup">
+                <form class="signup" autocomplete="off">
                     <h3>Sign Up</h3>
                     <input type="text" name="username" placeholder="Username" />
                     <input type="password" name="password" placeholder="Password" /> 
@@ -148,11 +148,12 @@
             </div>
             <div id="footer">
                 <a href="http://minus.com" target="_blank"><img src="images/bottom_logo.png" width="60px"/></a>
-                <a id="user" target="_blank">profile</a>
-                <a href="http://min.us/pages/galleries" target="_blank" id="galleries_header" class="minus_link"></a>
+                <a href="#" id="signout" title="Sign out"><img src="images/logout.png" width="13px" /></a>
+                <a href="#" id="user" target="_blank">                    
+                    <span>profile</span>                                          
+                </a>                            
             </div>    
         </div>
-
 
         <script src="js/jquery.min.js"></script>
         <script src="js/jquery.timeago.js"></script>

@@ -64,30 +64,49 @@
         listener({ method: 'takeScreenshot', captureType: captureType });
     }
 
+    function listenForUsernameChange() {
+        if (window.last_username != window.store.get('username')) {
+            initContextMenu();
+        }        
+
+        window.last_username = window.store.get('username');
+    }
+
+    setInterval(listenForUsernameChange, 5000);
+
     function initContextMenu() { 
         if (browser.isChrome || browser.isFirefox) {
-            browser.contextMenus.create({
-                "title": "Upload to Minus", 
-                "onclick" : createGalleryClick, 
-                "contexts":["image"]
-            });
+            chrome.contextMenus.removeAll(function(){
+                if (window.store.get('username')) {
+                    browser.contextMenus.create({
+                        "title": "Upload to Minus", 
+                        "onclick" : createGalleryClick, 
+                        "contexts":["image"]
+                    });
+                
+                    browser.contextMenus.create({
+                        "title": "Capture Visible Part of Page", 
+                        "onclick" : function(){ captureFromMenu('visible') }
+                    });
 
-            browser.contextMenus.create({
-                "title": "Capture Visible Part of Page", 
-                "onclick" : function(){ captureFromMenu('visible') }
-            });
-
-            browser.contextMenus.create({
-                "title": "Capture Selected Area", 
-                "onclick" : function(){ captureFromMenu('region') },
-                "documentUrlPatterns": ["http://*/*"]
-            });
-            
-            browser.contextMenus.create({
-                "title": "Capture Entire Page", 
-                "onclick" : function(){ captureFromMenu('full') },
-                "documentUrlPatterns": ["http://*/*"]
-            });
+                    browser.contextMenus.create({
+                        "title": "Capture Selected Area", 
+                        "onclick" : function(){ captureFromMenu('region') },
+                        "documentUrlPatterns": ["http://*/*"]
+                    });
+                    
+                    browser.contextMenus.create({
+                        "title": "Capture Entire Page", 
+                        "onclick" : function(){ captureFromMenu('full') },
+                        "documentUrlPatterns": ["http://*/*"]
+                    });
+                } else {
+                    browser.contextMenus.create({
+                        "title": "Not logged to Minus", 
+                        "onclick" : function(){}
+                    });                    
+                }                                
+            });            
 
 
         } else if(browser.isSafari) {
@@ -110,7 +129,7 @@
     function uploadItem(binaryData, gallery_id, title, onProgress){
         anim.start();
 
-        Minus.uploadItem(gallery_id, title.slice(0,50)+".png", "image/png", binaryData, 
+        Minus.uploadItem(gallery_id, title.slice(0,50), "image/png", binaryData, 
             function(resp){
                 anim.stop();
 
@@ -267,7 +286,7 @@
         var settings = {};
         settings[store.get('hotkey_visible')||'V'] = 'visible';
         settings[store.get('hotkey_region')||'R'] = 'region';        
-        settings[store.get('hotkey_full')||'H'] = 'full';        
+        settings[store.get('hotkey_ffll')||'H'] = 'full';        
 
         console.log(receiver);
     
@@ -282,6 +301,8 @@
                 anim.start();
 
                 browser.tabs.getSelected(null, function(tab) {
+                    window.latest_title = tab.title;
+
                     switch (msg.captureType) {
                         case 'visible':
                             captureVisible(function(dataUrl){
@@ -380,6 +401,43 @@
                     }
                 );
 
+                break;
+
+            case 'getCaptureData':
+                console.log('getting capture data', sendResponse);
+
+                sendResponse({
+                    response: {
+                        data: window.latest_screenshot,
+                        tabtitle: window.latest_title
+                    }
+                });
+                break;
+            
+            case 'getSettings': 
+                sendResponse({
+                    response: {
+                        settings: {
+                            shortcuts: {
+                                visible: { key: (store.get('hotkey_visible')||'V') },
+
+                                region: { key: (store.get('hotkey_region')||'R') },
+
+                                entire: { key: (store.get('hotkey_full')||'H') }
+                            }
+                        }
+                    }        
+                });
+                break;
+
+            case 'updateHotkeys':
+                console.log('setting key', msg.settings.hotkey_region);
+
+                store.set('hotkey_visible', msg.settings.hotkey_visible);
+                store.set('hotkey_region', msg.settings.hotkey_region);
+                store.set('hotkey_full', msg.settings.hotkey_entire);
+
+                updateSettings();
                 break;
 
             case '_ajax':

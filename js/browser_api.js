@@ -270,14 +270,23 @@
 
                 if (browser._isNetworkInitialized) {
                     console.log("Calling onReady callback", browser._isNetworkInitialized);
-                    browser._onReadyCallback();
+
+                    if (!browser.isFirefox || FFStore.synced) {
+                        browser._onReadyCallback();
+                    } else {
+                        setTimeout(function() {
+                            browser.onReady();
+                        }, 50);
+                    }
                 }
             } else {             
                 browser._isNetworkInitialized = true;                
                 if (browser._onReadyCallback) {
                     console.log("Calling onReady callback", browser._isNetworkInitialized);
                     
-                    if (FFStore.synced) {
+                    if (!browser.isFirefox || FFStore.synced) {
+
+                        console.log('')
                         browser._onReadyCallback();
                     } else {
                         setTimeout(function() {
@@ -466,15 +475,7 @@
                             browser._height === document.body.offsetHeight)
                             return setTimeout(l, 500);
 
-                        browser._width = document.body.offsetWidth;
-                        browser._height = document.body.offsetHeight;
-
-                        browser.postMessage({
-                            _api: true,
-                            method: 'popupResize', 
-                            width: browser._width,
-                            height: browser._height
-                        });
+                        browser.resizePopup();
                         
                         setTimeout(l, 500);
                     }
@@ -484,6 +485,18 @@
             };
 
             waitForDispatcher();            
+        },
+
+        resizePopup: function() {                        
+            browser._width = document.body.offsetWidth;
+            browser._height = document.body.offsetHeight;
+
+            browser.postMessage({
+                _api: true,
+                method: 'popupResize', 
+                width: browser._width,
+                height: browser._height
+            });            
         },
         
         _s_addMessageListener: function(listener) {

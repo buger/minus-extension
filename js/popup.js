@@ -68,8 +68,13 @@
                 
                 if (!image)
                     return img_preloader.src = ICON_ARCHIVE;                
+                        
+                img_url = $(img).data('image');
 
-                img_preloader.src = $(img).data('image');
+                if (img_url.match(/^\/\//)) 
+                    img_url = "http:" + img_url;
+
+                img_preloader.src = img_url;
                     
                 img_preloader.onload = function(){
                     if (img_preloader.naturalHeight == 0) {                            
@@ -130,14 +135,9 @@
         if (msg.method == "screenshotComplete") {
             updateTimeline();
         } else {
-            updateUser();
+            //updateUser();
         }
     });
-
-    browser.onReady(function(){
-      
-    });
-
 
     $('#take_screenshot').live('click', function(){
         var parent = $(this).parent();
@@ -188,8 +188,12 @@
         var $form = $('#signin form.signin');    
         var form_data = $form.serializeArray();
 
+        $("#signin").addClass('loading');
+
         Minus.oauthToken(form_data[0].value, form_data[1].value, 
-            function(resp) {
+            function(resp) {                
+                $("#signin").removeClass('loading');
+
                 if (resp.error) {
                     $('#signin .error').html('Wrong user/password combination.');
                 } else {
@@ -211,6 +215,7 @@
                     $('#main_content').show();
 
                     $('body').css({ 'width': '380px' });
+                    browser.resizePopup();
                 }
             }
         );
@@ -224,8 +229,12 @@
         var $form = $('#signin form.signup');    
         var form_data = $form.serializeArray();
 
+        $("#signin").addClass('loading');
+
         Minus.registerUser(form_data[0].value, form_data[1].value, form_data[2].value, 
             function(resp) {
+                $("#signin").removeClass('loading');
+
                 if (!resp.success) {
                     $('#signin .error').html(resp.username);
                 } else {
@@ -246,11 +255,11 @@
     $('#signin form.signup').bind('submit', registerUser);
 
     function updateUser() {
+        console.log('user store:', window.store.get('username'));
+
         var user = window.store.get('username');
         var token = window.store.get('access_token');        
         var skip_loader = window.store.get('last_view');
-
-        console.log(user, token);
         
         if (token && user) { 
             Minus.setToken(token);
@@ -261,9 +270,10 @@
                         function(refresh_resp) {
                             if (refresh_resp.error) {
                                 $('body').css({ 'width': '542px' });
-                                $('#signin').show();
-                                
+                                browser.resizePopup();
+
                                 $('#main_content').hide();
+                                $('#signin').show();
                             } else {
                                 console.log(refresh_resp);
 
@@ -279,12 +289,13 @@
                 }
             });
             
-            $('#user').attr('href','http://minus.com/'+user);
+            $('#user').attr('href','http://minus.com/' + user);            
         } else {
             $('body').css({ 'width': '542px' });            
-            $('#signin').show();
-                                
+            browser.resizePopup();
+
             $('#main_content').hide();
+            $('#signin').show();
         }
     }
 
@@ -302,23 +313,39 @@
 
         updateUser();
 
-        browser.tabs.getSelected(null, function(tab) {
-            if (window.store.get('edit_image') == undefined)
-                window.store.set('edit_image', true);
+        if (window.store.get('edit_image') == undefined)
+            window.store.set('edit_image', true);
 
-            $('#edit_image').attr('checked', window.store.get('edit_image'))
+        $('#edit_image').attr('checked', window.store.get('edit_image'))
+        
+        $('#edit_image').bind('change', function(){
+            window.store.set('edit_image', this.checked);
+        });
+
+        $('#header *[data-screenshot-type]').each(function(){
+            var hotkey = store.get('hotkey_'+$(this).data('screenshot-type'));
+
+            if (hotkey) hotkey = (browser.isPlatform('mac') ? 'Cmd' : 'Ctrl') + "+Alt+" + hotkey;
             
-            $('#edit_image').bind('change', function(){
-                window.store.set('edit_image', this.checked);
-            });
+            $(this).find('span').html(hotkey);
+        });
 
-            $('#header *[data-screenshot-type]').each(function(){
-                var hotkey = store.get('hotkey_'+$(this).data('screenshot-type'));
+        $('#signout').bind('click', function(){
+            window.store.remove('username');
+            window.store.remove('access_token');
+            
 
-                if (hotkey) hotkey = (browser.isPlatform('mac') ? 'Cmd' : 'Ctrl') + "+Alt+" + hotkey;
-                
-                $(this).find('span').html(hotkey);
-            });
+            $('#main_content').hide();
+            $('#signin .error').html('');
+            $('#signin').show();
+
+            $('body').css({ 'width': '542px' });
+            browser.resizePopup();
+        });
+
+        browser.tabs.getSelected(null, function(tab) {
+            if (browser.isFirefox)
+                return true;
 
             if (tab.url.match('https://') || tab.url.match('chrome://') || tab.url.match("file://")) {
                 $('#header *[data-screenshot-type=full], #header *[data-screenshot-type=region]').remove();
@@ -331,9 +358,10 @@
             }
         });
     }
+    
 
-    $(document).ready(function() {    
-        setTimeout(updateUI, 0);
+    browser.onReady(function() {    
+        updateUI();
     });
 
 }())
