@@ -479,9 +479,13 @@
         console.log('refreshing token');
 
         Minus.refreshToken(window.store.get('refresh_token'),
-            function(resp) {
-                window.store.set('access_token', resp.access_token);
+            function(resp) {              
+                window.store.set('access_token', resp.access_token);                
                 window.store.set('refresh_token', resp.refresh_token);
+
+                if (!resp.access_token) {
+                    window.store.remove('username');
+                }
             }
         );
 
