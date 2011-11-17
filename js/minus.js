@@ -64,6 +64,7 @@
     function Ajax(url, options) { 
         if (!options) options = {};
         if (!options.params) options.params = {};
+        if (!options.method) options.method = 'GET';
 
         var xhr = function() {
             if (typeof XMLHttpRequest === 'undefined') {
@@ -83,14 +84,16 @@
             return new XMLHttpRequest();
         }();           
         
-        if (API_TOKEN)
+        if (API_TOKEN && url.match(/minus.com/))
             options.params['bearer_token'] = API_TOKEN;
 
-        if (options.binaryData || options.method !== "POST" && options.params) {            
-            url += (url.match(/\?/) ? "&" : "?") + hashToQueryString(options.params);
+        if (options.binaryData || options.method === "GET" && options.params) {
+            
+            if (hashToQueryString(options.params))
+                url += (url.match(/\?/) ? "&" : "?") + hashToQueryString(options.params);
         }
         
-        xhr.open(options.method || "GET", url, true);  
+        xhr.open(options.method, url, true);  
 
         xhr.onreadystatechange = function(){
             if (xhr.readyState == 4) {
