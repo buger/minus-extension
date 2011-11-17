@@ -135,6 +135,8 @@
     function uploadItem(binaryData, gallery_id, title, onProgress){
         anim.start();
 
+        if (!title) title = "Untitled";
+
         Minus.uploadItem(gallery_id, title.slice(0,50), "image/png", binaryData, 
             function(resp){
                 anim.stop();
