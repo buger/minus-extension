@@ -273,8 +273,11 @@
             $('#upload').bind('click', function(){
                 if ($(this).hasClass('loading'))
                     return false;
-
-                $(this).html('0% uploaded');
+                
+                if (browser.isFirefox)
+                    $(this).html('Uploading...');
+                else
+                    $(this).html('0% uploaded');
                 
                 var title = capture_data.tabtitle;
 
