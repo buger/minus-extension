@@ -299,11 +299,34 @@
             var galleries = [];
             var pages_loaded = 1;
 
+            function updateGalleries(galleries){
+                galleries = galleries.sort(function(a,b){ return (((a.page+1)*100+a.idx) - ((b.page+1)*100+b.idx)) });
+                
+                options = ["<option></option>"];                                    
+                $.each(galleries, function(idx, item) {
+                    options.push("<option value='"+item.id+"'>"+(item.name||"Untitled")+"</option>");
+                });
+
+                $('#gallery_list').html(options.join(""));
+
+                $('#gallery_list').trigger("liszt:updated");
+            }
+
             function loadGalleries(){
                 Minus.timeline(window.store.get('username'), 'folders', 1, function(response) {
-                    console.log('tadam', response);
+                    
+                    galleries = []
 
-                    for (var i=1; i<=response.pages; i++) {
+                    $.each(response.results, function(idx, item){
+                        item.page = 1;
+                        item.idx = idx;
+
+                        galleries.push(item);
+                    });
+
+                    updateGalleries(galleries);
+                    
+                    for (var i=2; i<=response.pages; i++) {
                         (function(page){
                             Minus.timeline(window.store.get('username'), 'folders', i, function(resp){
                                 $.each(resp.results, function(idx, item){
@@ -316,17 +339,7 @@
                                 pages_loaded += 1;
                                 
                                 if (pages_loaded === response.pages) {
-                                    galleries = galleries.sort(function(a,b){ return (((a.page+1)*100+a.idx) - ((b.page+1)*100+b.idx)) });
-                                    
-                                    options = ["<option></option>"];                                    
-
-                                    $.each(galleries, function(idx, item) {
-                                        options.push("<option value='"+item.id+"'>"+(item.name||"Untitled")+"</option>");
-                                    });
-
-                                    $('#gallery_list').html(options.join(""));
-
-                                    $('#gallery_list').trigger("liszt:updated");
+                                    updateGalleries(galleries);
                                 }
                             });
                         })(i)
