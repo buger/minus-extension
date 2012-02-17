@@ -408,8 +408,12 @@
                     .attr('href', "http://www.aviary.com/html5")
                     .attr('target', "_blank");
 
-                $('#upload').removeClass('loading').html('Save and Upload');                
+                $('#upload').removeClass('loading').html('Save and Upload');
             }
+
+            setTimeout(function(){
+                Feather_OnLaunchComplete();
+            }, 3000);
              
             function launchEditor(imageid) { 
                 if (_featherLoaded) { 
